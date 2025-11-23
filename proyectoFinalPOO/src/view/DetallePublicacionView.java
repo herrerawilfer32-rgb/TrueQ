@@ -16,11 +16,16 @@ public class DetallePublicacionView extends JFrame {
     private final PublicacionController controller;
     private final Publicacion publicacion;
     private final User usuarioActual;
+    private final MainWindow mainWindow; // referencia a la ventana principal
 
-    public DetallePublicacionView(PublicacionController controller, Publicacion publicacion, User usuarioActual) {
+    public DetallePublicacionView(PublicacionController controller,
+                                  Publicacion publicacion,
+                                  User usuarioActual,
+                                  MainWindow mainWindow) {
         this.controller = controller;
         this.publicacion = publicacion;
         this.usuarioActual = usuarioActual;
+        this.mainWindow = mainWindow;
 
         setTitle("Detalle de Publicación: " + publicacion.getTitulo());
         setSize(500, 600);
@@ -79,15 +84,24 @@ public class DetallePublicacionView extends JFrame {
 
         add(new JScrollPane(panelInfo), BorderLayout.CENTER);
 
-        // Botón Ofertar
-        // Solo si no es el dueño
-        if (!publicacion.getIdVendedor().equals(usuarioActual.getId())) {
+        // Botones inferiores
+        if (usuarioActual != null && !publicacion.getIdVendedor().equals(usuarioActual.getId())) {
+
+            JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+
             JButton btnOfertar = new JButton("Realizar Oferta");
             btnOfertar.setFont(new Font("Arial", Font.BOLD, 16));
             btnOfertar.setBackground(new Color(52, 152, 219));
             btnOfertar.setForeground(Color.WHITE);
             btnOfertar.addActionListener(e -> mostrarDialogoOferta());
-            add(btnOfertar, BorderLayout.SOUTH);
+            panelBotones.add(btnOfertar);
+
+            JButton btnContactar = new JButton("Contactar vendedor");
+            btnContactar.addActionListener(e -> contactarVendedor());
+            panelBotones.add(btnContactar);
+
+            add(panelBotones, BorderLayout.SOUTH);
+
         } else {
             JLabel lblDueño = new JLabel("Eres el propietario de esta publicación", SwingConstants.CENTER);
             lblDueño.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -96,11 +110,16 @@ public class DetallePublicacionView extends JFrame {
     }
 
     private void mostrarDialogoOferta() {
+        if (usuarioActual == null) {
+            JOptionPane.showMessageDialog(this, "Debes iniciar sesión para ofertar.");
+            return;
+        }
+
         if (publicacion.getTipoPublicacion() == TipoPublicacion.SUBASTA) {
-            String input = JOptionPane.showInputDialog(this, "Ingresa el monto de tu puja ($):");
-            if (input != null && !input.isEmpty()) {
+            String montoStr = JOptionPane.showInputDialog(this, "Ingresa tu monto de puja:");
+            if (montoStr != null && !montoStr.isEmpty()) {
                 try {
-                    double monto = Double.parseDouble(input);
+                    double monto = Double.parseDouble(montoStr);
                     boolean exito = controller.ofertar(publicacion.getIdArticulo(), usuarioActual.getId(), monto, null);
                     if (exito)
                         JOptionPane.showMessageDialog(this, "¡Puja realizada con éxito!");
@@ -116,5 +135,29 @@ public class DetallePublicacionView extends JFrame {
                     JOptionPane.showMessageDialog(this, "¡Propuesta enviada con éxito!");
             }
         }
+    }
+
+    /**
+     * Invocado cuando el usuario pulsa "Contactar vendedor".
+     * Delegamos en MainWindow la lógica de abrir o crear el chat.
+     */
+    private void contactarVendedor() {
+        if (usuarioActual == null) {
+            JOptionPane.showMessageDialog(this,
+                    "Debes iniciar sesión para contactar al vendedor.",
+                    "Sesión requerida",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (mainWindow == null) {
+            JOptionPane.showMessageDialog(this,
+                    "No se puede abrir el chat desde esta ventana.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        mainWindow.abrirChatConVendedor(publicacion);
+        dispose(); // Cerramos el detalle y dejamos al usuario en la pestaña de chats
     }
 }
