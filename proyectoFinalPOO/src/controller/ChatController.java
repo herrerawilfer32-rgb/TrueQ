@@ -16,7 +16,7 @@ import persistence.ChatRepository;
 public class ChatController {
     
     // Dependencia al repositorio de persistencia
-    private ChatRepository chatRepository;
+    private final ChatRepository chatRepository;
     
     /**
      * Constructor principal del controlador de chat.
@@ -38,12 +38,7 @@ public class ChatController {
      * @return Chat existente o uno nuevo si no se encontró.
      */
     public Chat obtenerOCrearChat(User usuarioA, User usuarioB) {
-        if (usuarioA == null || usuarioB == null) {
-            throw new IllegalArgumentException("Los usuarios del chat no pueden ser nulos.");
-        }
-        if (usuarioA.equals(usuarioB)) {
-            throw new IllegalArgumentException("No se puede crear un chat con el mismo usuario.");
-        }
+        validarUsuarios(usuarioA, usuarioB);
         
         Chat chatExistente = chatRepository.buscarChatEntreUsuarios(usuarioA, usuarioB);
         if (chatExistente != null) {
@@ -97,5 +92,37 @@ public class ChatController {
             throw new IllegalArgumentException("El usuario no puede ser nulo.");
         }
         return chatRepository.listarChatsDeUsuario(usuario);
+    }
+
+    /**
+     * Retorna la lista de mensajes del chat.
+     */
+    public List<Mensaje> obtenerMensajes(Chat chat) {
+        if (chat == null) {
+            throw new IllegalArgumentException("El chat no puede ser nulo.");
+        }
+        return chat.getListaMensajes();
+    }
+
+    /**
+     * Marca un chat como leído.
+     */
+    public void marcarChatComoLeido(Chat chat) {
+        if (chat == null) return;
+        chat.marcarMensajesComoLeidos();
+        chatRepository.guardarChat(chat);
+    }
+    
+    // -----------------------------------------------------------
+    // Métodos privados de validación
+    // -----------------------------------------------------------
+    
+    private void validarUsuarios(User usuarioA, User usuarioB) {
+        if (usuarioA == null || usuarioB == null) {
+            throw new IllegalArgumentException("Los usuarios del chat no pueden ser nulos.");
+        }
+        if (usuarioA.equals(usuarioB)) {
+            throw new IllegalArgumentException("No se puede crear un chat con el mismo usuario.");
+        }
     }
 }
