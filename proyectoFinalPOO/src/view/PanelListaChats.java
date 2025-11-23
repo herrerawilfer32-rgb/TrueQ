@@ -9,7 +9,6 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
@@ -19,9 +18,7 @@ import java.util.List;
 
 /**
  * Panel encargado de mostrar la lista de chats asociados a un usuario.
- * 
- * Este panel no abre ventanas por sí mismo, sino que notifica a un
- * componente externo mediante un listener cuando se desea abrir un chat.
+ * Notifica a un listener externo cuando el usuario desea abrir un chat.
  */
 public class PanelListaChats extends JPanel {
 
@@ -40,7 +37,7 @@ public class PanelListaChats extends JPanel {
     private ChatSeleccionListener chatSeleccionListener;
 
     // ---------------------------------------------------------
-    // Componentes de la interfaz gráfica
+    // Componentes UI
     // ---------------------------------------------------------
     private JTable tablaChats;
     private DefaultTableModel modeloTablaChats;
@@ -67,8 +64,7 @@ public class PanelListaChats extends JPanel {
 
         inicializarComponentes();
         configurarEventos();
-        // No se cargan chats aún, porque puede que no haya usuario logueado
-        actualizarEtiquetaUsuario();
+        actualizarEtiquetaUsuario(); // Modo invitado al inicio
     }
 
     // ---------------------------------------------------------
@@ -77,10 +73,8 @@ public class PanelListaChats extends JPanel {
 
     /**
      * Establece el usuario actual (logueado) sobre el cual se listarán los chats.
-     * <p>
-     * Si el usuario es null, el panel entra en modo invitado y no mostrará chats.
      *
-     * @param usuarioActual Usuario logueado o null si es invitado.
+     * @param usuarioActual Usuario actual o null si es invitado.
      */
     public void setUsuarioActual(User usuarioActual) {
         this.usuarioActual = usuarioActual;
@@ -89,17 +83,14 @@ public class PanelListaChats extends JPanel {
     }
 
     // ---------------------------------------------------------
-    // Métodos privados de inicialización y UI
+    // Inicialización de UI
     // ---------------------------------------------------------
 
-    /**
-     * Inicializa y organiza los componentes gráficos del panel.
-     */
     private void inicializarComponentes() {
         setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // ---- Panel superior: info de usuario + botón actualizar ----
+        // ---- Panel superior ----
         JPanel panelSuperior = new JPanel(new BorderLayout());
         etiquetaUsuarioActual = new JLabel();
         panelSuperior.add(etiquetaUsuarioActual, BorderLayout.WEST);
@@ -111,12 +102,11 @@ public class PanelListaChats extends JPanel {
 
         add(panelSuperior, BorderLayout.NORTH);
 
-        // ---- Tabla de chats ----
+        // ---- Tabla ----
         modeloTablaChats = new DefaultTableModel(
-                new Object[]{"Contacto", "Mensajes no leídos", "Total mensajes"}, 0) {
+                new Object[]{"Contacto", "Mensajes no leídos", "Total"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                // La tabla es de solo lectura
                 return false;
             }
         };
@@ -127,7 +117,7 @@ public class PanelListaChats extends JPanel {
         JScrollPane scrollTabla = new JScrollPane(tablaChats);
         add(scrollTabla, BorderLayout.CENTER);
 
-        // ---- Panel inferior: botón "Abrir chat" ----
+        // ---- Panel inferior ----
         JPanel panelInferior = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         botonAbrirChat = new JButton("Abrir chat");
         panelInferior.add(botonAbrirChat);
@@ -135,18 +125,11 @@ public class PanelListaChats extends JPanel {
         add(panelInferior, BorderLayout.SOUTH);
     }
 
-    /**
-     * Configura los manejadores de eventos de los botones.
-     */
     private void configurarEventos() {
         botonActualizar.addActionListener(e -> cargarChatsEnTabla());
-
         botonAbrirChat.addActionListener(e -> notificarChatSeleccionado());
     }
 
-    /**
-     * Actualiza el texto de la etiqueta que indica el usuario actual.
-     */
     private void actualizarEtiquetaUsuario() {
         if (usuarioActual == null) {
             etiquetaUsuarioActual.setText("Chats de: Invitado (sin sesión)");
@@ -155,16 +138,15 @@ public class PanelListaChats extends JPanel {
         }
     }
 
-    /**
-     * Carga en la tabla los chats asociados al usuario actual.
-     * Si no hay usuario logueado, la tabla se limpia.
-     */
+    // ---------------------------------------------------------
+    // Carga de información
+    // ---------------------------------------------------------
+
     private void cargarChatsEnTabla() {
         modeloTablaChats.setRowCount(0);
 
         if (usuarioActual == null) {
-            // Modo invitado: no existe lista de chats
-            return;
+            return; // modo invitado
         }
 
         List<Chat> listaChats = chatController.listarChatsDeUsuario(usuarioActual);
@@ -173,8 +155,8 @@ public class PanelListaChats extends JPanel {
         }
 
         for (Chat chat : listaChats) {
-            User otroUsuario = obtenerOtroUsuarioDelChat(chat);
 
+            User otroUsuario = chat.obtenerOtroUsuario(usuarioActual);
             String nombreContacto = (otroUsuario != null)
                     ? otroUsuario.getNombre()
                     : "Desconocido";
@@ -190,53 +172,30 @@ public class PanelListaChats extends JPanel {
         }
     }
 
-    /**
-     * Determina el otro usuario participante del chat, diferente al usuarioActual.
-     *
-     * @param chat Chat del cual se desea conocer el otro participante.
-     * @return Usuario contrario al usuarioActual, o null si no se puede determinar.
-     */
-    private User obtenerOtroUsuarioDelChat(Chat chat) {
-        if (chat == null || usuarioActual == null) {
-            return null;
-        }
+    // ---------------------------------------------------------
+    // Selección de chat
+    // ---------------------------------------------------------
 
-        if (usuarioActual.equals(chat.getUsuarioEmisor())) {
-            return chat.getUsuarioReceptor();
-        }
-        if (usuarioActual.equals(chat.getUsuarioReceptor())) {
-            return chat.getUsuarioEmisor();
-        }
-        return null;
-    }
-
-    /**
-     * Obtiene el chat correspondiente a la fila seleccionada y notifica
-     * al listener externo para que este decida cómo abrirlo.
-     */
     private void notificarChatSeleccionado() {
-        if (chatSeleccionListener == null) {
-            return;
-        }
-        if (usuarioActual == null) {
-            // Sin usuario no tiene sentido abrir chats
+        if (chatSeleccionListener == null || usuarioActual == null) {
             return;
         }
 
-        int filaSeleccionada = tablaChats.getSelectedRow();
-        if (filaSeleccionada < 0) {
+        int fila = tablaChats.getSelectedRow();
+        if (fila < 0) {
             return;
         }
 
         List<Chat> listaChats = chatController.listarChatsDeUsuario(usuarioActual);
-        if (listaChats == null || listaChats.isEmpty()) {
-            return;
-        }
-        if (filaSeleccionada >= listaChats.size()) {
+        if (fila >= listaChats.size()) {
             return;
         }
 
-        Chat chatSeleccionado = listaChats.get(filaSeleccionada);
+        Chat chatSeleccionado = listaChats.get(fila);
+
+        // Marcar como leído antes de abrir
+        chatController.marcarChatComoLeido(chatSeleccionado);
+
         chatSeleccionListener.abrirChat(chatSeleccionado);
     }
 }
