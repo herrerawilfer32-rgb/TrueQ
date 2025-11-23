@@ -2,15 +2,15 @@ package view;
 
 import controller.AuthController;
 import controller.PublicacionController;
-// >>> CHAT
 import controller.ChatController;
-import model.chat.Chat;
-import persistence.ChatRepository;
-import persistence.ChatFileRepository;
-// <<< CHAT
 
 import model.Publicacion;
 import model.User;
+import model.chat.Chat;
+
+import persistence.ChatRepository;
+import persistence.ChatFileRepository;
+import persistence.UserRepository;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,30 +22,26 @@ public class MainWindow extends JFrame {
 
     private final AuthController authController;
     private final PublicacionController pubController;
-    // >>> CHAT
     private final ChatController chatController;
-    // <<< CHAT
 
     // Componentes UI
     private JLabel lblBienvenida;
     private JButton btnLoginLogout;
-    private DefaultListModel<Publicacion> listModel; // Cambiado a Publicacion
+    private DefaultListModel<Publicacion> listModel; // Modelo para la lista visual
     private JList<Publicacion> listaVisual;
 
-    // >>> CHAT - componentes del módulo de chat
+    // Pestañas y paneles de chat
     private JTabbedPane pestañasCentro;
     private PanelListaChats panelListaChats;
     private PanelChatDetalle panelChatDetalle;
-    // <<< CHAT
 
     public MainWindow(AuthController authController, PublicacionController pubController) {
         this.authController = authController;
         this.pubController = pubController;
 
-        // >>> CHAT - inicializar controlador de chat
+        // Inicializar repositorio y controlador de chat
         ChatRepository chatRepository = new ChatFileRepository();
         this.chatController = new ChatController(chatRepository);
-        // <<< CHAT
 
         setTitle("Mercado Local - Inicio");
         setSize(900, 600);
@@ -74,7 +70,10 @@ public class MainWindow extends JFrame {
         header.add(btnLoginLogout, BorderLayout.EAST);
         add(header, BorderLayout.NORTH);
 
-        // --- CENTRO: LISTA DE PUBLICACIONES ---
+        // --- CENTRO: PESTAÑAS (Publicaciones + Chats) ---
+        pestañasCentro = new JTabbedPane();
+
+        // ==== TAB PUBLICACIONES ====
         listModel = new DefaultListModel<>();
         listaVisual = new JList<>(listModel);
         listaVisual.setFont(new Font("Monospaced", Font.PLAIN, 14));
@@ -83,34 +82,31 @@ public class MainWindow extends JFrame {
         listaVisual.setCellRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
-                    boolean cellHasFocus) {
+                                                          boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof Publicacion) {
                     Publicacion p = (Publicacion) value;
                     setText(String.format("[%s] %s - %s ($%.2f)",
                             p.getTipoPublicacion(), p.getTitulo(), p.getDescripcion(),
-                            (p instanceof model.PublicacionSubasta) ? ((model.PublicacionSubasta) p).getPrecioMinimo()
+                            (p instanceof model.PublicacionSubasta)
+                                    ? ((model.PublicacionSubasta) p).getPrecioMinimo()
                                     : 0.0));
                 }
                 return this;
             }
         });
 
-        JPanel panelCentro = new JPanel(new BorderLayout());
-        panelCentro.setBorder(BorderFactory.createTitledBorder(" Últimas Publicaciones "));
-        panelCentro.add(new JScrollPane(listaVisual), BorderLayout.CENTER);
+        JPanel panelPublicaciones = new JPanel(new BorderLayout());
+        panelPublicaciones.setBorder(BorderFactory.createTitledBorder(" Últimas Publicaciones "));
+        panelPublicaciones.add(new JScrollPane(listaVisual), BorderLayout.CENTER);
 
-        // >>> CHAT - envolver centro en pestañas y agregar pestaña de chats
-        pestañasCentro = new JTabbedPane();
-        pestañasCentro.addTab("Publicaciones", panelCentro);
+        pestañasCentro.addTab("Publicaciones", panelPublicaciones);
 
-        // Paneles de chat
-        panelListaChats = new PanelListaChats(chatController, new PanelListaChats.ChatSeleccionListener() {
-            @Override
-            public void abrirChat(Chat chatSeleccionado) {
-                panelChatDetalle.setChatActual(chatSeleccionado);
-                pestañasCentro.setSelectedIndex(1); // Cambiar a tab de Chats
-            }
+        // ==== TAB CHATS ====
+        panelListaChats = new PanelListaChats(chatController, chatSeleccionado -> {
+            // Cuando seleccionan un chat en la lista
+            panelChatDetalle.setChatActual(chatSeleccionado);
+            pestañasCentro.setSelectedIndex(1); // Ir a la pestaña "Chats"
         });
 
         panelChatDetalle = new PanelChatDetalle(chatController);
@@ -124,9 +120,7 @@ public class MainWindow extends JFrame {
 
         pestañasCentro.addTab("Chats", splitChats);
 
-        // Agregar pestañas al centro de la ventana
         add(pestañasCentro, BorderLayout.CENTER);
-        // <<< CHAT
 
         // --- FOOTER: BOTONES DE ACCIÓN ---
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
@@ -178,10 +172,7 @@ public class MainWindow extends JFrame {
         listModel.clear();
         List<Publicacion> lista = pubController.obtenerPublicacionesActivas();
 
-        if (lista.isEmpty()) {
-            // No podemos agregar string al modelo de Publicacion, así que manejamos vacío
-            // visualmente o nada
-        } else {
+        if (lista != null) {
             for (Publicacion p : lista) {
                 listModel.addElement(p);
             }
@@ -200,7 +191,8 @@ public class MainWindow extends JFrame {
             return;
         }
 
-        new DetallePublicacionView(pubController, seleccionada, usuarioLogueado).setVisible(true);
+        // 🔗 Ahora le pasamos también this (MainWindow) para poder abrir el chat desde el detalle
+        new DetallePublicacionView(pubController, seleccionada, usuarioLogueado, this).setVisible(true);
     }
 
     private void eliminarPublicacionSeleccionada() {
@@ -288,13 +280,60 @@ public class MainWindow extends JFrame {
             btnLoginLogout.setText("Iniciar Sesión");
         }
 
-        // >>> CHAT - actualizar paneles de chat según usuario
+        // 🔄 Actualizar módulo de chat cuando cambia el usuario
         if (panelListaChats != null) {
             panelListaChats.setUsuarioActual(usuarioLogueado);
         }
         if (panelChatDetalle != null) {
             panelChatDetalle.setUsuarioActual(usuarioLogueado);
         }
-        // <<< CHAT
+    }
+
+    /**
+     * Método de integración: abre (o crea) un chat entre el usuario logueado
+     * y el vendedor de la publicación indicada.
+     */
+    public void abrirChatConVendedor(Publicacion publicacion) {
+        if (usuarioLogueado == null) {
+            JOptionPane.showMessageDialog(this,
+                    "Debes iniciar sesión para contactar al vendedor.");
+            return;
+        }
+        if (publicacion == null) {
+            JOptionPane.showMessageDialog(this,
+                    "No se encontró la publicación.");
+            return;
+        }
+        if (usuarioLogueado.getId().equals(publicacion.getIdVendedor())) {
+            JOptionPane.showMessageDialog(this,
+                    "Eres el propietario de esta publicación.");
+            return;
+        }
+
+        // Buscar datos del vendedor
+        UserRepository userRepo = new UserRepository();
+        User vendedor = userRepo.buscarPorId(publicacion.getIdVendedor());
+        if (vendedor == null) {
+            JOptionPane.showMessageDialog(this,
+                    "No se encontró la información del vendedor.");
+            return;
+        }
+
+        // Obtener o crear el chat entre comprador y vendedor
+        Chat chat = chatController.obtenerOCrearChat(usuarioLogueado, vendedor);
+
+        // Actualizar paneles de chat
+        if (panelListaChats != null) {
+            panelListaChats.setUsuarioActual(usuarioLogueado);
+        }
+        if (panelChatDetalle != null) {
+            panelChatDetalle.setUsuarioActual(usuarioLogueado);
+            panelChatDetalle.setChatActual(chat);
+        }
+
+        // Cambiar a la pestaña "Chats"
+        if (pestañasCentro != null) {
+            pestañasCentro.setSelectedIndex(1);
+        }
     }
 }
