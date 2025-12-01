@@ -1,11 +1,13 @@
 package view;
 
 import controller.PublicacionController;
+import controller.ReporteController;
 import model.Publicacion;
 import model.PublicacionSubasta;
 import model.PublicacionTrueque;
 import model.User;
 import util.TipoPublicacion;
+import util.TipoReporte;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,18 +19,21 @@ public class DetallePublicacionView extends JFrame {
     private final Publicacion publicacion;
     private final User usuarioActual;
     private final MainWindow mainWindow; // referencia a la ventana principal
+    private final ReporteController reporteController;
 
     public DetallePublicacionView(PublicacionController controller,
-                                  Publicacion publicacion,
-                                  User usuarioActual,
-                                  MainWindow mainWindow) {
+            Publicacion publicacion,
+            User usuarioActual,
+            MainWindow mainWindow,
+            ReporteController reporteController) {
         this.controller = controller;
         this.publicacion = publicacion;
         this.usuarioActual = usuarioActual;
         this.mainWindow = mainWindow;
+        this.reporteController = reporteController;
 
         setTitle("Detalle de Publicación: " + publicacion.getTitulo());
-        setSize(500, 600);
+        setSize(500, 650);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -85,9 +90,9 @@ public class DetallePublicacionView extends JFrame {
         add(new JScrollPane(panelInfo), BorderLayout.CENTER);
 
         // Botones inferiores
-        if (usuarioActual != null && !publicacion.getIdVendedor().equals(usuarioActual.getId())) {
+        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
 
-            JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        if (usuarioActual != null && !publicacion.getIdVendedor().equals(usuarioActual.getId())) {
 
             JButton btnOfertar = new JButton("Realizar Oferta");
             btnOfertar.setFont(new Font("Arial", Font.BOLD, 16));
@@ -100,13 +105,20 @@ public class DetallePublicacionView extends JFrame {
             btnContactar.addActionListener(e -> contactarVendedor());
             panelBotones.add(btnContactar);
 
-            add(panelBotones, BorderLayout.SOUTH);
+            JButton btnReportar = new JButton("⚠️ Reportar");
+            btnReportar.setBackground(new Color(231, 76, 60));
+            btnReportar.setForeground(Color.WHITE);
+            btnReportar.addActionListener(e -> reportarPublicacion());
+            panelBotones.add(btnReportar);
 
         } else {
             JLabel lblDueño = new JLabel("Eres el propietario de esta publicación", SwingConstants.CENTER);
             lblDueño.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
             add(lblDueño, BorderLayout.SOUTH);
+            return; // No agregar panel de botones si es el dueño
         }
+
+        add(panelBotones, BorderLayout.SOUTH);
     }
 
     private void mostrarDialogoOferta() {
@@ -120,7 +132,8 @@ public class DetallePublicacionView extends JFrame {
             if (montoStr != null && !montoStr.isEmpty()) {
                 try {
                     double monto = Double.parseDouble(montoStr);
-                    boolean exito = controller.ofertar(publicacion.getIdArticulo(), usuarioActual.getId(), monto, null);
+                    boolean exito = controller.ofertar(publicacion.getIdArticulo(), usuarioActual.getId(), monto, null,
+                            null);
                     if (exito)
                         JOptionPane.showMessageDialog(this, "¡Puja realizada con éxito!");
                 } catch (NumberFormatException e) {
@@ -128,12 +141,68 @@ public class DetallePublicacionView extends JFrame {
                 }
             }
         } else {
-            String propuesta = JOptionPane.showInputDialog(this, "Describe tu oferta de trueque:");
-            if (propuesta != null && !propuesta.isEmpty()) {
-                boolean exito = controller.ofertar(publicacion.getIdArticulo(), usuarioActual.getId(), 0, propuesta);
-                if (exito)
+            // Dialogo personalizado para Trueque con imágenes
+            JDialog dialog = new JDialog(this, "Realizar Oferta de Trueque", true);
+            dialog.setSize(400, 300);
+            dialog.setLocationRelativeTo(this);
+            dialog.setLayout(new BorderLayout());
+
+            JPanel panelCentral = new JPanel();
+            panelCentral.setLayout(new BoxLayout(panelCentral, BoxLayout.Y_AXIS));
+            panelCentral.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+            panelCentral.add(new JLabel("Describe tu oferta de trueque:"));
+            JTextArea txtPropuesta = new JTextArea(5, 20);
+            txtPropuesta.setLineWrap(true);
+            panelCentral.add(new JScrollPane(txtPropuesta));
+
+            panelCentral.add(Box.createVerticalStrut(10));
+
+            java.util.List<String> rutasImagenes = new java.util.ArrayList<>();
+            JLabel lblImagenes = new JLabel("Imágenes adjuntas: 0");
+            JButton btnAdjuntar = new JButton("Adjuntar Imagen");
+
+            btnAdjuntar.addActionListener(e -> {
+                JFileChooser fileChooser = new JFileChooser();
+                int result = fileChooser.showOpenDialog(dialog);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    rutasImagenes.add(fileChooser.getSelectedFile().getAbsolutePath());
+                    lblImagenes.setText("Imágenes adjuntas: " + rutasImagenes.size());
+                }
+            });
+
+            JPanel panelImg = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            panelImg.add(btnAdjuntar);
+            panelImg.add(lblImagenes);
+            panelCentral.add(panelImg);
+
+            dialog.add(panelCentral, BorderLayout.CENTER);
+
+            JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            JButton btnCancelar = new JButton("Cancelar");
+            btnCancelar.addActionListener(e -> dialog.dispose());
+
+            JButton btnEnviar = new JButton("Enviar Oferta");
+            btnEnviar.addActionListener(e -> {
+                String propuesta = txtPropuesta.getText();
+                if (propuesta == null || propuesta.isBlank()) {
+                    JOptionPane.showMessageDialog(dialog, "La descripción no puede estar vacía.");
+                    return;
+                }
+
+                boolean exito = controller.ofertar(publicacion.getIdArticulo(), usuarioActual.getId(), 0, propuesta,
+                        rutasImagenes);
+                if (exito) {
                     JOptionPane.showMessageDialog(this, "¡Propuesta enviada con éxito!");
-            }
+                    dialog.dispose();
+                }
+            });
+
+            panelBotones.add(btnCancelar);
+            panelBotones.add(btnEnviar);
+            dialog.add(panelBotones, BorderLayout.SOUTH);
+
+            dialog.setVisible(true);
         }
     }
 
@@ -159,5 +228,16 @@ public class DetallePublicacionView extends JFrame {
 
         mainWindow.abrirChatConVendedor(publicacion);
         dispose(); // Cerramos el detalle y dejamos al usuario en la pestaña de chats
+    }
+
+    private void reportarPublicacion() {
+        if (usuarioActual == null) {
+            JOptionPane.showMessageDialog(this, "Debes iniciar sesión para reportar.");
+            return;
+        }
+
+        new CrearReporteDialog(this, reporteController, usuarioActual,
+                publicacion.getIdArticulo(), TipoReporte.PUBLICACION)
+                .setVisible(true);
     }
 }

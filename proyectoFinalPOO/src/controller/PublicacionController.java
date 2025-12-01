@@ -15,10 +15,13 @@ public class PublicacionController {
 
     private final PublicacionService publicacionService;
     private final OfertaService ofertaService;
+    private final ChatController chatController;
 
-    public PublicacionController(PublicacionService publicacionService, OfertaService ofertaService) {
+    public PublicacionController(PublicacionService publicacionService, OfertaService ofertaService,
+            ChatController chatController) {
         this.publicacionService = publicacionService;
         this.ofertaService = ofertaService;
+        this.chatController = chatController;
     }
 
     public List<Publicacion> obtenerPublicacionesActivas() {
@@ -27,6 +30,10 @@ public class PublicacionController {
 
     public List<Publicacion> obtenerPublicacionesPorVendedor(String idVendedor) {
         return publicacionService.obtenerPublicacionesPorVendedor(idVendedor);
+    }
+
+    public User obtenerVendedor(String idPublicacion) {
+        return publicacionService.obtenerVendedorDePublicacion(idPublicacion);
     }
 
     public boolean crearSubasta(String titulo, String descripcion, User vendedor, double precioMinimo,
@@ -70,14 +77,47 @@ public class PublicacionController {
 
     // --- Métodos para Ofertas ---
 
-    public boolean ofertar(String idPublicacion, String idOfertante, double monto, String descripcionTrueque) {
+    public boolean ofertar(String idPublicacion, String idOfertante, double monto, String descripcionTrueque,
+            List<String> imagenes) {
         try {
-            ofertaService.realizarNuevaOferta(generarIdOferta(), idPublicacion, idOfertante, new Date(), monto,
-                    descripcionTrueque);
+            Oferta nuevaOferta = ofertaService.realizarNuevaOferta(generarIdOferta(), idPublicacion, idOfertante,
+                    new Date(), monto,
+                    descripcionTrueque, imagenes);
+
+            // Enviar mensaje automático al chat
+            if (chatController != null) {
+                User vendedor = obtenerVendedor(idPublicacion);
+                User ofertante = publicacionService.obtenerUsuarioPorId(idOfertante);
+
+                if (ofertante != null && vendedor != null) {
+                    model.chat.Chat chat = chatController.obtenerOCrearChat(ofertante, vendedor);
+
+                    // Construir mensaje con detalles de la oferta
+                    StringBuilder mensaje = new StringBuilder("¡Hola! He realizado una oferta por tu publicación.\n");
+
+                    if (nuevaOferta.getDescripcionTrueque() != null && !nuevaOferta.getDescripcionTrueque().isEmpty()) {
+                        mensaje.append("Ofrezco: ").append(nuevaOferta.getDescripcionTrueque()).append("\n");
+                    }
+                    if (nuevaOferta.getMontoOferta() > 0) {
+                        mensaje.append("Monto: $").append(nuevaOferta.getMontoOferta()).append("\n");
+                    }
+                    if (nuevaOferta.getRutasImagenes() != null && !nuevaOferta.getRutasImagenes().isEmpty()) {
+                        mensaje.append("📷 Imágenes adjuntas: ").append(nuevaOferta.getRutasImagenes().size())
+                                .append(" (haz clic en 'Ver Ofertas Relacionadas' para verlas)");
+                    }
+
+                    // Enviar mensaje
+                    chatController.enviarMensaje(chat, ofertante, mensaje.toString());
+                }
+            }
+
             return true;
         } catch (Exception e) {
             e.printStackTrace();
-            javax.swing.JOptionPane.showMessageDialog(null, "Error al ofertar: " + e.toString());
+            // Mostrar solo el mensaje de error, no el nombre de la excepción
+            String mensajeError = e.getMessage() != null ? e.getMessage() : "Error desconocido al ofertar";
+            javax.swing.JOptionPane.showMessageDialog(null, mensajeError, "Error al ofertar",
+                    javax.swing.JOptionPane.ERROR_MESSAGE);
             return false;
         }
     }
@@ -119,7 +159,7 @@ public class PublicacionController {
             javax.swing.JOptionPane.showMessageDialog(null, "Subasta cerrada correctamente.");
         } catch (Exception e) {
             e.printStackTrace();
-            javax.swing.JOptionPane.showMessageDialog(null, "Error al cerrar subasta: " + e.toString());
+            javax.swing.JOptionPane.showMessageDialog(null, "Error al cerrar subasta: " + e.getMessage());
         }
     }
 

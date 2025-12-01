@@ -53,7 +53,7 @@ public class PanelListaChats extends JPanel {
      *                              desee abrir un chat específico.
      */
     public PanelListaChats(ChatController chatController,
-                           ChatSeleccionListener chatSeleccionListener) {
+            ChatSeleccionListener chatSeleccionListener) {
 
         if (chatController == null) {
             throw new IllegalArgumentException("El controlador de chat no puede ser nulo.");
@@ -104,7 +104,7 @@ public class PanelListaChats extends JPanel {
 
         // ---- Tabla ----
         modeloTablaChats = new DefaultTableModel(
-                new Object[]{"Contacto", "Mensajes no leídos", "Total"}, 0) {
+                new Object[] { "Contacto", "Mensajes no leídos", "Total" }, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -146,7 +146,7 @@ public class PanelListaChats extends JPanel {
         modeloTablaChats.setRowCount(0);
 
         if (usuarioActual == null) {
-            return; // modo invitado
+            return; // modo invitado - no cargar chats
         }
 
         List<Chat> listaChats = chatController.listarChatsDeUsuario(usuarioActual);
@@ -164,7 +164,7 @@ public class PanelListaChats extends JPanel {
             String textoNoLeidos = chat.isTieneMensajesNoLeidos() ? "Sí" : "No";
             int totalMensajes = chat.getListaMensajes().size();
 
-            modeloTablaChats.addRow(new Object[]{
+            modeloTablaChats.addRow(new Object[] {
                     nombreContacto,
                     textoNoLeidos,
                     totalMensajes

@@ -3,10 +3,13 @@ package view;
 import controller.AuthController;
 import controller.PublicacionController;
 import controller.ChatController;
+import controller.AdminController;
+import controller.ReporteController;
 
 import model.Publicacion;
 import model.User;
 import model.chat.Chat;
+import util.RolUsuario;
 
 import persistence.ChatRepository;
 import persistence.ChatFileRepository;
@@ -15,6 +18,7 @@ import persistence.UserRepository;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import javax.swing.Timer;
 
 public class MainWindow extends JFrame {
 
@@ -23,10 +27,13 @@ public class MainWindow extends JFrame {
     private final AuthController authController;
     private final PublicacionController pubController;
     private final ChatController chatController;
+    private final AdminController adminController;
+    private final ReporteController reporteController;
 
     // Componentes UI
     private JLabel lblBienvenida;
     private JButton btnLoginLogout;
+    private JButton btnPanelAdmin; // Nuevo botón admin
     private JPanel panelContenedorCards;
     private java.util.List<PublicacionCardPanel> tarjetasActuales;
     private PublicacionCardPanel tarjetaSeleccionada;
@@ -36,13 +43,15 @@ public class MainWindow extends JFrame {
     private PanelListaChats panelListaChats;
     private PanelChatDetalle panelChatDetalle;
 
-    public MainWindow(AuthController authController, PublicacionController pubController) {
+    private JButton btnNotificaciones;
+
+    public MainWindow(AuthController authController, PublicacionController pubController,
+            ChatController chatController, AdminController adminController, ReporteController reporteController) {
         this.authController = authController;
         this.pubController = pubController;
-
-        // Inicializar repositorio y controlador de chat
-        ChatRepository chatRepository = new ChatFileRepository();
-        this.chatController = new ChatController(chatRepository);
+        this.chatController = chatController;
+        this.adminController = adminController;
+        this.reporteController = reporteController;
 
         setTitle("Mercado Local - Inicio");
         setSize(900, 600);
@@ -52,6 +61,9 @@ public class MainWindow extends JFrame {
 
         initUI();
         cargarPublicaciones(); // MOSTRAR PUBLICACIONES APENAS INICIA
+
+        // Timer para notificaciones (cada 5 segundos)
+        new Timer(5000, e -> actualizarNotificaciones()).start();
     }
 
     private void initUI() {
@@ -64,11 +76,33 @@ public class MainWindow extends JFrame {
         lblBienvenida.setForeground(Color.WHITE);
         lblBienvenida.setFont(new Font("SansSerif", Font.BOLD, 16));
 
+        JPanel panelDerechoHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        panelDerechoHeader.setOpaque(false);
+
+        btnNotificaciones = new JButton("🔔 0");
+        btnNotificaciones.setVisible(false);
+        btnNotificaciones.setBackground(new Color(231, 76, 60));
+        btnNotificaciones.setForeground(Color.WHITE);
+        btnNotificaciones.addActionListener(e -> {
+            if (pestañasCentro != null)
+                pestañasCentro.setSelectedIndex(1); // Ir a chats
+        });
+
+        btnPanelAdmin = new JButton("🛠️ Panel Admin");
+        btnPanelAdmin.setVisible(false);
+        btnPanelAdmin.setBackground(new Color(243, 156, 18));
+        btnPanelAdmin.setForeground(Color.WHITE);
+        btnPanelAdmin.addActionListener(e -> abrirPanelAdmin());
+
         btnLoginLogout = new JButton("Iniciar Sesión");
         btnLoginLogout.addActionListener(e -> manejarSesion());
 
+        panelDerechoHeader.add(btnPanelAdmin);
+        panelDerechoHeader.add(btnNotificaciones);
+        panelDerechoHeader.add(btnLoginLogout);
+
         header.add(lblBienvenida, BorderLayout.WEST);
-        header.add(btnLoginLogout, BorderLayout.EAST);
+        header.add(panelDerechoHeader, BorderLayout.EAST);
         add(header, BorderLayout.NORTH);
 
         // --- CENTRO: PESTAÑAS (Publicaciones + Chats) ---
@@ -206,8 +240,9 @@ public class MainWindow extends JFrame {
         Publicacion seleccionada = tarjetaSeleccionada.getPublicacion();
 
         // 🔗 Ahora le pasamos también this (MainWindow) para poder abrir el chat desde
-        // el detalle
-        new DetallePublicacionView(pubController, seleccionada, usuarioLogueado, this).setVisible(true);
+        // el detalle, y el ReporteController
+        new DetallePublicacionView(pubController, seleccionada, usuarioLogueado, this, reporteController)
+                .setVisible(true);
     }
 
     private void eliminarPublicacionSeleccionada() {
@@ -222,16 +257,32 @@ public class MainWindow extends JFrame {
         }
         Publicacion seleccionada = tarjetaSeleccionada.getPublicacion();
 
+        // Permitir eliminar si es dueño O si es admin
+        boolean esDueño = seleccionada.getIdVendedor().equals(usuarioLogueado.getId());
+        boolean esAdmin = usuarioLogueado.isAdmin();
+
+        if (!esDueño && !esAdmin) {
+            JOptionPane.showMessageDialog(this, "No puedes eliminar esta publicación.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         int confirm = JOptionPane.showConfirmDialog(this,
                 "¿Estás seguro de eliminar '" + seleccionada.getTitulo() + "'?", "Confirmar",
                 JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
-            boolean exito = pubController.eliminarPublicacion(seleccionada.getIdArticulo(), usuarioLogueado.getId());
+            boolean exito = false;
+            if (esAdmin && !esDueño) {
+                exito = adminController.eliminarPublicacion(seleccionada.getIdArticulo(), usuarioLogueado.getId());
+            } else {
+                exito = pubController.eliminarPublicacion(seleccionada.getIdArticulo(), usuarioLogueado.getId());
+            }
+
             if (exito) {
                 JOptionPane.showMessageDialog(this, "Publicación eliminada.");
                 cargarPublicaciones();
             } else {
-                JOptionPane.showMessageDialog(this, "No puedes eliminar esta publicación (No eres el dueño).", "Error",
+                JOptionPane.showMessageDialog(this, "Error al eliminar la publicación.", "Error",
                         JOptionPane.ERROR_MESSAGE);
             }
         }
@@ -273,6 +324,12 @@ public class MainWindow extends JFrame {
         new CrearPublicacionView(pubController, usuarioLogueado, this).setVisible(true);
     }
 
+    private void abrirPanelAdmin() {
+        if (usuarioLogueado != null && usuarioLogueado.isAdmin()) {
+            new AdminDashboardView(adminController, reporteController, usuarioLogueado).setVisible(true);
+        }
+    }
+
     private void manejarSesion() {
         if (esInvitado()) {
             new LoginWindow(authController, this);
@@ -290,9 +347,17 @@ public class MainWindow extends JFrame {
         if (user != null) {
             lblBienvenida.setText("Hola, " + user.getNombre());
             btnLoginLogout.setText("Cerrar Sesión");
+
+            // Mostrar botón admin si corresponde
+            if (user.isAdmin()) {
+                btnPanelAdmin.setVisible(true);
+            } else {
+                btnPanelAdmin.setVisible(false);
+            }
         } else {
             lblBienvenida.setText("Bienvenido, Invitado");
             btnLoginLogout.setText("Iniciar Sesión");
+            btnPanelAdmin.setVisible(false);
         }
 
         // 🔄 Actualizar módulo de chat cuando cambia el usuario
@@ -301,6 +366,10 @@ public class MainWindow extends JFrame {
         }
         if (panelChatDetalle != null) {
             panelChatDetalle.setUsuarioActual(usuarioLogueado);
+            // Limpiar chat al cerrar sesión
+            if (usuarioLogueado == null) {
+                panelChatDetalle.clearChat();
+            }
         }
     }
 
@@ -349,6 +418,33 @@ public class MainWindow extends JFrame {
         // Cambiar a la pestaña "Chats"
         if (pestañasCentro != null) {
             pestañasCentro.setSelectedIndex(1);
+        }
+    }
+
+    /**
+     * Actualiza el botón de notificaciones con el número de mensajes no leídos.
+     */
+    private void actualizarNotificaciones() {
+        if (usuarioLogueado == null) {
+            btnNotificaciones.setVisible(false);
+            return;
+        }
+
+        // Obtener chats del usuario actual
+        List<Chat> chats = chatController.obtenerChatsDeUsuario(usuarioLogueado);
+        int mensajesNoLeidos = 0;
+
+        for (Chat chat : chats) {
+            if (chat.tieneMensajesNoLeidos()) {
+                mensajesNoLeidos++;
+            }
+        }
+
+        if (mensajesNoLeidos > 0) {
+            btnNotificaciones.setText("🔔 " + mensajesNoLeidos);
+            btnNotificaciones.setVisible(true);
+        } else {
+            btnNotificaciones.setVisible(false);
         }
     }
 }

@@ -212,11 +212,7 @@ public class PublicacionCardPanel extends JPanel {
 
     private String obtenerNombreVendedor() {
         try {
-            service.PublicacionService pubService = new service.PublicacionService(
-                    new persistence.PublicacionRepository(),
-                    new service.UserService(new persistence.UserRepository()),
-                    new persistence.OfertaRepository());
-            User vendedor = pubService.obtenerVendedorDePublicacion(publicacion.getIdArticulo());
+            User vendedor = controller.obtenerVendedor(publicacion.getIdArticulo());
             if (vendedor != null) {
                 return vendedor.getNombre();
             }

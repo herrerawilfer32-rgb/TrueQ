@@ -28,7 +28,7 @@ public class OfertaService {
     }
 
     public Oferta realizarNuevaOferta(String idOferta, String idPublicacion, String idOfertante, Date fechaOferta,
-            double montoOferta, String descripcionTrueque) {
+            double montoOferta, String descripcionTrueque, List<String> rutasImagenes) {
         // 1. Validar que el ofertante exista
         User ofertante = userService.buscarUsuarioPorId(idOfertante);
         if (ofertante == null) {
@@ -89,6 +89,10 @@ public class OfertaService {
         // 4. Crear la nueva oferta
         Oferta nuevaOferta = new Oferta(idOferta, idPublicacion, idOfertante, new java.util.Date(), montoOferta,
                 descripcionTrueque, EstadoOferta.PENDIENTE);
+
+        if (rutasImagenes != null) {
+            nuevaOferta.setRutasImagenes(rutasImagenes);
+        }
 
         // 4. Guardar la oferta en el repositorio
         ofertaRepository.guardar(nuevaOferta);

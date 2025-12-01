@@ -5,15 +5,8 @@ import model.User;
 import model.chat.Chat;
 import model.chat.Mensaje;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
+import javax.swing.*;
+import java.awt.*;
 import java.time.format.DateTimeFormatter;
 
 /**
@@ -21,9 +14,9 @@ import java.time.format.DateTimeFormatter;
  * enviar nuevos mensajes.
  *
  * Este panel depende de:
- *  - Un ChatController para la lógica de negocio.
- *  - Un User (usuarioActual) para saber quién envía los mensajes.
- *  - Un Chat (chatActual) que es la conversación que se está visualizando.
+ * - Un ChatController para la lógica de negocio.
+ * - Un User (usuarioActual) para saber quién envía los mensajes.
+ * - Un Chat (chatActual) que es la conversación que se está visualizando.
  */
 public class PanelChatDetalle extends JPanel {
 
@@ -46,7 +39,8 @@ public class PanelChatDetalle extends JPanel {
     /**
      * Constructor principal del panel de detalle de chat.
      *
-     * @param chatController Controlador de chat para gestionar el envío de mensajes.
+     * @param chatController Controlador de chat para gestionar el envío de
+     *                       mensajes.
      */
     public PanelChatDetalle(ChatController chatController) {
         if (chatController == null) {
@@ -66,7 +60,8 @@ public class PanelChatDetalle extends JPanel {
      * Establece el usuario actual (logueado) que enviará los mensajes
      * desde este panel.
      *
-     * @param usuarioActual Usuario logueado o null si se encuentra en modo invitado.
+     * @param usuarioActual Usuario logueado o null si se encuentra en modo
+     *                      invitado.
      */
     public void setUsuarioActual(User usuarioActual) {
         this.usuarioActual = usuarioActual;
@@ -87,6 +82,14 @@ public class PanelChatDetalle extends JPanel {
         }
 
         recargarConversacion();
+    }
+
+    /**
+     * Limpia el chat actual (usado al cerrar sesión)
+     */
+    public void clearChat() {
+        this.chatActual = null;
+        areaConversacion.setText("");
     }
 
     // ---------------------------------------------------------
@@ -119,6 +122,81 @@ public class PanelChatDetalle extends JPanel {
         panelInferior.add(panelBoton, BorderLayout.EAST);
 
         add(panelInferior, BorderLayout.SOUTH);
+
+        // Panel Superior: Botón de Ver Ofertas
+        JPanel panelSuperior = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton btnVerOfertas = new JButton("Ver Ofertas Relacionadas");
+        btnVerOfertas.addActionListener(e -> mostrarOfertasRelacionadas());
+        panelSuperior.add(btnVerOfertas);
+        add(panelSuperior, BorderLayout.NORTH);
+    }
+
+    private void mostrarOfertasRelacionadas() {
+        if (chatActual == null)
+            return;
+
+        java.util.List<model.Oferta> ofertas = chatController.obtenerOfertasRelacionadas(chatActual);
+        if (ofertas.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No hay ofertas relacionadas entre estos usuarios.");
+            return;
+        }
+
+        JPanel panelOfertas = new JPanel();
+        panelOfertas.setLayout(new javax.swing.BoxLayout(panelOfertas, javax.swing.BoxLayout.Y_AXIS));
+
+        for (model.Oferta o : ofertas) {
+            JPanel card = new JPanel(new BorderLayout());
+            card.setBorder(BorderFactory.createTitledBorder("Oferta de " + o.getIdOfertante()));
+
+            String info = "<html><b>Descripción:</b> "
+                    + (o.getDescripcionTrueque() != null ? o.getDescripcionTrueque() : "Dinero") + "<br/>" +
+                    "<b>Monto:</b> " + o.getMontoOferta() + "<br/>" +
+                    "<b>Estado:</b> " + o.getEstadoOferta() + "<br/>" +
+                    "<b>Fecha:</b> " + o.getFechaOferta() + "</html>";
+            card.add(new JLabel(info), BorderLayout.CENTER);
+
+            if (o.getRutasImagenes() != null && !o.getRutasImagenes().isEmpty()) {
+                JButton btnVerImagenes = new JButton("Ver Imágenes Adjuntas (" + o.getRutasImagenes().size() + ")");
+                btnVerImagenes.addActionListener(e -> {
+                    int confirm = JOptionPane.showConfirmDialog(this,
+                            "El usuario ha adjuntado imágenes.\n¿Deseas verlas? (Asegúrate de que no sea contenido inapropiado)",
+                            "Confirmación de Seguridad", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        mostrarImagenes(o.getRutasImagenes());
+                    }
+                });
+                card.add(btnVerImagenes, BorderLayout.SOUTH);
+            }
+
+            panelOfertas.add(card);
+            panelOfertas.add(Box.createVerticalStrut(10));
+        }
+
+        JScrollPane scroll = new JScrollPane(panelOfertas);
+        scroll.setPreferredSize(new java.awt.Dimension(500, 400));
+
+        JOptionPane.showMessageDialog(this, scroll, "Ofertas Relacionadas", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void mostrarImagenes(java.util.List<String> rutas) {
+        JDialog dialog = new JDialog((java.awt.Frame) SwingUtilities.getWindowAncestor(this), "Imágenes Adjuntas",
+                true);
+        dialog.setSize(600, 500);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel panelImg = new JPanel();
+        for (String ruta : rutas) {
+            // Intentar cargar imagen
+            ImageIcon icon = new ImageIcon(ruta);
+            // Redimensionar si es muy grande
+            Image img = icon.getImage();
+            Image newImg = img.getScaledInstance(200, 200, java.awt.Image.SCALE_SMOOTH);
+            panelImg.add(new JLabel(new ImageIcon(newImg)));
+        }
+
+        dialog.add(new JScrollPane(panelImg));
+        dialog.setVisible(true);
     }
 
     private void configurarEventos() {

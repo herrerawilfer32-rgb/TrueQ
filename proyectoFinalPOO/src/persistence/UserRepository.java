@@ -22,9 +22,11 @@ public class UserRepository {
             baseDeDatos = new HashMap<>();
 
             // Key: "admin" / ID (Cédula): "10000000"
-            baseDeDatos.put("admin", new User(
+            User adminUser = new User(
                     "admin", "Juan", "Pérez", "admin@marketplace.com",
-                    "12345", "10000000", "Bogotá"));
+                    "12345", "10000000", "Bogotá");
+            adminUser.setRol(util.RolUsuario.ADMIN); // Asignar rol de ADMIN
+            baseDeDatos.put("admin", adminUser);
 
             // Key: "vendedor" / ID (Cédula): "20000000"
             baseDeDatos.put("vendedor", new User(
@@ -41,14 +43,6 @@ public class UserRepository {
     }
 
     public UserRepository() {
-        // Constructor vacío, la carga se hace en el bloque estático o aquí si
-        // preferimos
-        // Pero para mantener consistencia con el código anterior, lo dejamos así o lo
-        // movemos al constructor.
-        // El código original lo tenía en el constructor, pero el bloque estático es
-        // mejor para "base de datos estática".
-        // Sin embargo, para evitar problemas de recarga, vamos a asegurarnos de que se
-        // cargue.
         if (baseDeDatos.isEmpty()) {
             try {
                 @SuppressWarnings("unchecked")
@@ -90,5 +84,41 @@ public class UserRepository {
             }
         }
         return null;
+    }
+
+    /**
+     * Lista todos los usuarios del sistema
+     */
+    public java.util.List<User> listarTodos() {
+        return new java.util.ArrayList<>(baseDeDatos.values());
+    }
+
+    /**
+     * Actualiza un usuario existente
+     */
+    public boolean actualizar(User usuario) {
+        if (usuario == null || !baseDeDatos.containsKey(usuario.getNombreUsuario())) {
+            return false;
+        }
+        guardar(usuario);
+        return true;
+    }
+
+    /**
+     * Elimina un usuario por su ID
+     */
+    public boolean eliminar(String id) {
+        User usuario = buscarPorId(id);
+        if (usuario == null) {
+            return false;
+        }
+        baseDeDatos.remove(usuario.getNombreUsuario());
+        try {
+            Persistencia.guardarObjeto(RUTA_ARCHIVO, baseDeDatos);
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

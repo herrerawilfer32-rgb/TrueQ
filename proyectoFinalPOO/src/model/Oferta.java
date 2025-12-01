@@ -17,6 +17,7 @@ public class Oferta implements Serializable {
 
 	private double montoOferta; // Monto en dinero ofrecido
 	private String descripcionTrueque; // Descripción del trueque ofrecido
+	private java.util.List<String> rutasImagenes; // Imágenes adjuntas (para trueques)
 
 	private util.EstadoOferta estadoOferta;
 
@@ -30,6 +31,7 @@ public class Oferta implements Serializable {
 		this.montoOferta = montoOferta;
 		this.descripcionTrueque = descripcionTrueque;
 		this.estadoOferta = estadoOferta;
+		this.rutasImagenes = new java.util.ArrayList<>();
 	}
 
 	// Getters y setters
@@ -91,6 +93,17 @@ public class Oferta implements Serializable {
 
 	public void setEstadoOferta(util.EstadoOferta estadoOferta) {
 		this.estadoOferta = estadoOferta;
+	}
+
+	public java.util.List<String> getRutasImagenes() {
+		if (rutasImagenes == null) {
+			rutasImagenes = new java.util.ArrayList<>();
+		}
+		return rutasImagenes;
+	}
+
+	public void setRutasImagenes(java.util.List<String> rutasImagenes) {
+		this.rutasImagenes = rutasImagenes;
 	}
 
 }

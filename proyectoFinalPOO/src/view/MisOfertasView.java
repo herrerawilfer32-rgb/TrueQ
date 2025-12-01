@@ -97,7 +97,12 @@ public class MisOfertasView extends JFrame {
                 card.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
                 card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
 
-                String texto = "<html><b>De:</b> " + oferta.getIdOfertante() + "<br/>";
+                // Obtener el nombre del ofertante
+                persistence.UserRepository userRepo = new persistence.UserRepository();
+                model.User ofertante = userRepo.buscarPorId(oferta.getIdOfertante());
+                String nombreOfertante = (ofertante != null) ? ofertante.getNombre() : oferta.getIdOfertante();
+
+                String texto = "<html><b>De:</b> " + nombreOfertante + "<br/>";
                 if (seleccionada.getTipoPublicacion() == TipoPublicacion.SUBASTA) {
                     texto += "<b>Monto:</b> $" + oferta.getMontoOferta();
                 } else {

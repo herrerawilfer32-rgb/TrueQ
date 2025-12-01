@@ -113,4 +113,9 @@ public abstract class Publicacion implements Serializable {
 		this.tipoPublicacion = tipoPublicacion;
 	}
 
+	@Override
+	public String toString() {
+		return this.titulo;
+	}
+
 }

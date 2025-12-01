@@ -188,4 +188,11 @@ public class PublicacionService {
         }
         return false;
     }
+
+    /**
+     * Obtiene un usuario por su ID.
+     */
+    public User obtenerUsuarioPorId(String idUsuario) {
+        return userService.buscarUsuarioPorId(idUsuario);
+    }
 }

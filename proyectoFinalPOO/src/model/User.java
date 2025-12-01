@@ -3,6 +3,7 @@ package model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import util.RolUsuario;
 
 public class User implements Serializable {
 
@@ -21,6 +22,9 @@ public class User implements Serializable {
 	private int numeroCalificaciones;
 	private List<String> historialTransacciones;
 
+	// Rol del usuario (USUARIO o ADMIN)
+	private RolUsuario rol;
+
 	// Método constructor
 	public User(String nombreUsuario, String nombre, String apellido, String correo, String contraseñaHash, String id,
 			String ubicacion) {
@@ -36,6 +40,7 @@ public class User implements Serializable {
 		this.reputacion = 0.0;
 		this.numeroCalificaciones = 0;
 		this.historialTransacciones = new ArrayList<>();
+		this.rol = RolUsuario.USUARIO; // Por defecto es usuario regular
 	}
 
 	// Métodos de Lógica de Negocio (Dominio)
@@ -123,5 +128,18 @@ public class User implements Serializable {
 
 	public List<String> getHistorialTransacciones() {
 		return historialTransacciones;
+	}
+
+	// Métodos para rol
+	public RolUsuario getRol() {
+		return rol;
+	}
+
+	public void setRol(RolUsuario rol) {
+		this.rol = rol;
+	}
+
+	public boolean isAdmin() {
+		return this.rol == RolUsuario.ADMIN;
 	}
 }
