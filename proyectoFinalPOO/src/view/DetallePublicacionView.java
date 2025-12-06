@@ -6,31 +6,47 @@ import model.Publicacion;
 import model.PublicacionSubasta;
 import model.PublicacionTrueque;
 import model.User;
+import model.Oferta;
 import util.TipoPublicacion;
 import util.TipoReporte;
 
 import javax.swing.*;
 import java.awt.*;
 import java.text.SimpleDateFormat;
+import java.text.NumberFormat;
+import java.util.List;
+import java.util.Locale;
 
 public class DetallePublicacionView extends JFrame {
 
     private final PublicacionController controller;
     private final Publicacion publicacion;
     private final User usuarioActual;
-    private final MainWindow mainWindow; // referencia a la ventana principal
+    private final MainWindow mainWindow;
     private final ReporteController reporteController;
 
+    // Elementos específicos para subasta
+    private PublicacionSubasta publicacionSubasta;
+    private JLabel lblPujaActual;
+    private JLabel lblIncrementoSugerido;
+    private JPanel panelHistorialPujas;
+    private final NumberFormat formatoMoneda;
+
     public DetallePublicacionView(PublicacionController controller,
-            Publicacion publicacion,
-            User usuarioActual,
-            MainWindow mainWindow,
-            ReporteController reporteController) {
+                                  Publicacion publicacion,
+                                  User usuarioActual,
+                                  MainWindow mainWindow,
+                                  ReporteController reporteController) {
         this.controller = controller;
         this.publicacion = publicacion;
         this.usuarioActual = usuarioActual;
         this.mainWindow = mainWindow;
         this.reporteController = reporteController;
+
+        // Formato "#.###,##"
+        formatoMoneda = NumberFormat.getNumberInstance(new Locale("es", "CO"));
+        formatoMoneda.setMinimumFractionDigits(2);
+        formatoMoneda.setMaximumFractionDigits(2);
 
         setTitle("Detalle de Publicación: " + publicacion.getTitulo());
         setSize(500, 650);
@@ -62,23 +78,20 @@ public class DetallePublicacionView extends JFrame {
         panelInfo.add(new JLabel("Descripción:"));
         panelInfo.add(txtDesc);
 
-        // Tipo y Detalles Específicos
+        // Tipo
         panelInfo.add(Box.createVerticalStrut(10));
         JLabel lblTipo = new JLabel("Tipo: " + publicacion.getTipoPublicacion());
         lblTipo.setFont(new Font("Arial", Font.ITALIC, 14));
         panelInfo.add(lblTipo);
 
+        // Detalle específico según tipo
         if (publicacion.getTipoPublicacion() == TipoPublicacion.SUBASTA) {
-            PublicacionSubasta subasta = (PublicacionSubasta) publicacion;
-            panelInfo.add(new JLabel("Precio Mínimo: $" + subasta.getPrecioMinimo()));
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-            panelInfo.add(new JLabel("Cierra el: " + sdf.format(subasta.getFechaCierre())));
+            configurarSeccionSubasta(panelInfo);
         } else {
-            PublicacionTrueque trueque = (PublicacionTrueque) publicacion;
-            panelInfo.add(new JLabel("Busca a cambio: " + trueque.getObjetosDeseados()));
+            configurarSeccionTrueque(panelInfo);
         }
 
-        // Imágenes (Lista de rutas por ahora)
+        // Imágenes (solo rutas por ahora)
         panelInfo.add(Box.createVerticalStrut(10));
         panelInfo.add(new JLabel("Imágenes adjuntas: " + publicacion.getFotosPaths().size()));
         for (String path : publicacion.getFotosPaths()) {
@@ -89,7 +102,7 @@ public class DetallePublicacionView extends JFrame {
 
         add(new JScrollPane(panelInfo), BorderLayout.CENTER);
 
-        // Botones inferiores
+        // BOTONES INFERIORES
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
 
         if (usuarioActual != null && !publicacion.getIdVendedor().equals(usuarioActual.getId())) {
@@ -101,6 +114,15 @@ public class DetallePublicacionView extends JFrame {
             btnOfertar.addActionListener(e -> mostrarDialogoOferta());
             panelBotones.add(btnOfertar);
 
+            // Botón de puja rápida solo en subastas
+            if (publicacion.getTipoPublicacion() == TipoPublicacion.SUBASTA) {
+                JButton btnPujaRapida = new JButton("Subir puja +10% inicial");
+                btnPujaRapida.setBackground(new Color(39, 174, 96));
+                btnPujaRapida.setForeground(Color.WHITE);
+                btnPujaRapida.addActionListener(e -> realizarPujaRapida());
+                panelBotones.add(btnPujaRapida);
+            }
+
             JButton btnContactar = new JButton("Contactar vendedor");
             btnContactar.addActionListener(e -> contactarVendedor());
             panelBotones.add(btnContactar);
@@ -111,15 +133,153 @@ public class DetallePublicacionView extends JFrame {
             btnReportar.addActionListener(e -> reportarPublicacion());
             panelBotones.add(btnReportar);
 
+            JButton btnCerrar = new JButton("Cerrar");
+            btnCerrar.addActionListener(e -> dispose());
+            panelBotones.add(btnCerrar);
+
+            add(panelBotones, BorderLayout.SOUTH);
+
         } else {
             JLabel lblDueño = new JLabel("Eres el propietario de esta publicación", SwingConstants.CENTER);
             lblDueño.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-            add(lblDueño, BorderLayout.SOUTH);
-            return; // No agregar panel de botones si es el dueño
+
+            JPanel panelBotonCerrar = new JPanel(new BorderLayout());
+            panelBotonCerrar.add(lblDueño, BorderLayout.CENTER);
+
+            JButton btnCerrar = new JButton("Cerrar");
+            btnCerrar.addActionListener(e -> dispose());
+            panelBotonCerrar.add(btnCerrar, BorderLayout.SOUTH);
+
+            add(panelBotonCerrar, BorderLayout.SOUTH);
+        }
+    }
+
+    // ============= SECCIÓN SUBASTA (LÓGICA DE NEGOCIO VA AL CONTROLLER) =============
+
+    private void configurarSeccionSubasta(JPanel panelInfo) {
+        this.publicacionSubasta = (PublicacionSubasta) publicacion;
+
+        panelInfo.add(Box.createVerticalStrut(10));
+
+        double precioMinimo = publicacionSubasta.getPrecioMinimo();
+        JLabel lblPrecioMinimo = new JLabel("Precio mínimo inicial: $ " + formatoMoneda.format(precioMinimo));
+        panelInfo.add(lblPrecioMinimo);
+
+        // Puja actual obtenida desde el controlador
+        lblPujaActual = new JLabel();
+        refrescarPujaActual();
+        panelInfo.add(lblPujaActual);
+
+        // Incremento rápido (10%) obtenido desde el controlador
+        double incremento = controller.calcularIncrementoRapidoSubasta(publicacionSubasta);
+        lblIncrementoSugerido = new JLabel("Incremento rápido (+10% inicial): $ " + formatoMoneda.format(incremento));
+        panelInfo.add(lblIncrementoSugerido);
+
+        // Fecha de cierre
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+        panelInfo.add(new JLabel("Cierra el: " + sdf.format(publicacionSubasta.getFechaCierre())));
+
+        // Historial de pujas
+        panelInfo.add(Box.createVerticalStrut(10));
+        panelInfo.add(new JLabel("Historial de pujas:"));
+
+        panelHistorialPujas = new JPanel();
+        panelHistorialPujas.setLayout(new BoxLayout(panelHistorialPujas, BoxLayout.Y_AXIS));
+        panelHistorialPujas.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        panelInfo.add(panelHistorialPujas);
+
+        cargarHistorialPujas();
+    }
+
+    private void refrescarPujaActual() {
+        if (publicacionSubasta == null || lblPujaActual == null) {
+            return;
+        }
+        double pujaActual = controller.obtenerPujaActualSubasta(publicacionSubasta);
+        lblPujaActual.setText("Puja actual: $ " + formatoMoneda.format(pujaActual));
+    }
+
+    private void cargarHistorialPujas() {
+        if (panelHistorialPujas == null) {
+            return;
         }
 
-        add(panelBotones, BorderLayout.SOUTH);
+        panelHistorialPujas.removeAll();
+
+        List<Oferta> ofertas = controller.obtenerOfertas(publicacion.getIdArticulo());
+        if (ofertas == null || ofertas.isEmpty()) {
+            JLabel lblSinOfertas = new JLabel("No hay pujas registradas aún.");
+            lblSinOfertas.setForeground(Color.GRAY);
+            panelHistorialPujas.add(lblSinOfertas);
+        } else {
+            for (Oferta oferta : ofertas) {
+                String texto = "• Ofertante: " + oferta.getIdOfertante()
+                        + " | Monto: $ " + formatoMoneda.format(oferta.getMontoOferta());
+                JLabel lblOferta = new JLabel(texto);
+                panelHistorialPujas.add(lblOferta);
+            }
+        }
+
+        panelHistorialPujas.revalidate();
+        panelHistorialPujas.repaint();
     }
+
+    private void realizarPujaRapida() {
+        if (usuarioActual == null) {
+            JOptionPane.showMessageDialog(this, "Debes iniciar sesión para ofertar.");
+            return;
+        }
+        if (publicacionSubasta == null) {
+            return;
+        }
+
+        double pujaActual = controller.obtenerPujaActualSubasta(publicacionSubasta);
+        double incremento = controller.calcularIncrementoRapidoSubasta(publicacionSubasta);
+        double nuevoMonto = pujaActual + incremento;
+
+        int opt = JOptionPane.showConfirmDialog(
+                this,
+                "Se ofertará automáticamente: $ " + formatoMoneda.format(nuevoMonto)
+                        + "\n(Incremento de +10% sobre la puja inicial)",
+                "Confirmar puja rápida",
+                JOptionPane.YES_NO_OPTION);
+
+        if (opt != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        boolean exito;
+        try {
+            exito = controller.ofertar(
+                    publicacion.getIdArticulo(),
+                    usuarioActual.getId(),
+                    nuevoMonto,
+                    null,
+                    null
+            );
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al realizar la puja rápida: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (exito) {
+            JOptionPane.showMessageDialog(this, "¡Puja rápida realizada con éxito!");
+            // Refrescar UI
+            refrescarPujaActual();
+            cargarHistorialPujas();
+        }
+    }
+
+    // ============= TRUEQUE (LÓGICA SIMPLE) =============
+
+    private void configurarSeccionTrueque(JPanel panelInfo) {
+        PublicacionTrueque trueque = (PublicacionTrueque) publicacion;
+        panelInfo.add(new JLabel("Busca a cambio: " + trueque.getObjetosDeseados()));
+    }
+
+    // ============= DIÁLOGO DE OFERTAS =============
 
     private void mostrarDialogoOferta() {
         if (usuarioActual == null) {
@@ -132,16 +292,27 @@ public class DetallePublicacionView extends JFrame {
             if (montoStr != null && !montoStr.isEmpty()) {
                 try {
                     double monto = Double.parseDouble(montoStr);
-                    boolean exito = controller.ofertar(publicacion.getIdArticulo(), usuarioActual.getId(), monto, null,
-                            null);
-                    if (exito)
+                    boolean exito = controller.ofertar(
+                            publicacion.getIdArticulo(),
+                            usuarioActual.getId(),
+                            monto,
+                            null,
+                            null
+                    );
+                    if (exito) {
                         JOptionPane.showMessageDialog(this, "¡Puja realizada con éxito!");
+                        refrescarPujaActual();
+                        cargarHistorialPujas();
+                    }
                 } catch (NumberFormatException e) {
                     JOptionPane.showMessageDialog(this, "Monto inválido.");
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Error al ofertar: " + ex.getMessage(),
+                            "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         } else {
-            // Dialogo personalizado para Trueque con imágenes
+            // TRUEQUE: mismo diálogo que ya tenías (con imágenes)
             JDialog dialog = new JDialog(this, "Realizar Oferta de Trueque", true);
             dialog.setSize(400, 300);
             dialog.setLocationRelativeTo(this);
@@ -190,8 +361,13 @@ public class DetallePublicacionView extends JFrame {
                     return;
                 }
 
-                boolean exito = controller.ofertar(publicacion.getIdArticulo(), usuarioActual.getId(), 0, propuesta,
-                        rutasImagenes);
+                boolean exito = controller.ofertar(
+                        publicacion.getIdArticulo(),
+                        usuarioActual.getId(),
+                        0,
+                        propuesta,
+                        rutasImagenes
+                );
                 if (exito) {
                     JOptionPane.showMessageDialog(this, "¡Propuesta enviada con éxito!");
                     dialog.dispose();
@@ -206,10 +382,8 @@ public class DetallePublicacionView extends JFrame {
         }
     }
 
-    /**
-     * Invocado cuando el usuario pulsa "Contactar vendedor".
-     * Delegamos en MainWindow la lógica de abrir o crear el chat.
-     */
+    // ============= CHAT Y REPORTE (SE MANTIENEN) =============
+
     private void contactarVendedor() {
         if (usuarioActual == null) {
             JOptionPane.showMessageDialog(this,
@@ -227,7 +401,7 @@ public class DetallePublicacionView extends JFrame {
         }
 
         mainWindow.abrirChatConVendedor(publicacion);
-        dispose(); // Cerramos el detalle y dejamos al usuario en la pestaña de chats
+        dispose();
     }
 
     private void reportarPublicacion() {

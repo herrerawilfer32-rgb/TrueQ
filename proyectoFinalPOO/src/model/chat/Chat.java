@@ -48,7 +48,10 @@ public class Chat implements java.io.Serializable {
         this.listaMensajes = new ArrayList<>();
         this.tieneMensajesNoLeidos = false;
     }
+
+ 
     // MÉTODOS DE NEGOCIO
+    
 
     /**
      * Agrega un nuevo mensaje al chat.
@@ -81,6 +84,15 @@ public class Chat implements java.io.Serializable {
     }
 
     /**
+     * Retorna el nombre del usuario con quien se conversa.
+     * Útil para mostrar en listas de chats.
+     */
+    public String getNombreOtroUsuario(User usuarioActual) {
+        User otro = obtenerOtroUsuario(usuarioActual);
+        return (otro != null) ? otro.getNombre() : "Desconocido";
+    }
+
+    /**
      * Dado un usuario, retorna la contraparte del chat.
      * Si el usuario no pertenece al chat, retorna null.
      */
@@ -106,7 +118,9 @@ public class Chat implements java.io.Serializable {
         return Collections.unmodifiableList(listaMensajes);
     }
 
+
     // GETTERS
+   
 
     public String getIdentificadorChat() {
         return identificadorChat;
@@ -130,5 +144,18 @@ public class Chat implements java.io.Serializable {
 
     public boolean tieneMensajesNoLeidos() {
         return this.tieneMensajesNoLeidos;
+    }
+
+    
+    /*
+     * Devuelve una vista previa (preview) del último mensaje,
+     * útil para mostrar en la lista de chats.
+     */
+    public String getPreviewUltimoMensaje() {
+        Mensaje m = getUltimoMensaje();
+        if (m == null)
+            return "(Sin mensajes)";
+        String contenido = m.getContenidoMensaje();
+        return contenido.length() > 30 ? contenido.substring(0, 30) + "..." : contenido;
     }
 }

@@ -2,144 +2,191 @@ package model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
 import util.RolUsuario;
 
 public class User implements Serializable {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	private String nombreUsuario; // Identificador de Login
-	private String nombre;
-	private String apellido;
-	private String correo;
-	private String contraseñaHash;
-	private String id; // Identificador Único (Cédula)
-	private String ubicacion;
+    private String nombreUsuario; // Identificador de Login
+    private String nombre;
+    private String apellido;
+    private String correo;
+    private String contraseñaHash;
+    private String id; // Identificador Único (Cédula)
+    private String ubicacion;
 
-	// Nuevos atributos para Fase 3 (Social/Reputación)
-	private double reputacion; // Promedio 0.0 - 5.0
-	private int numeroCalificaciones;
-	private List<String> historialTransacciones;
+    // Nuevos atributos para Fase 3 (Social/Reputación)
+    private double reputacion; // Promedio 0.0 - 5.0
+    private int numeroCalificaciones;
+    private List<String> historialTransacciones;
 
-	// Rol del usuario (USUARIO o ADMIN)
-	private RolUsuario rol;
+    // Rol del usuario (USUARIO o ADMIN)
+    private RolUsuario rol;
 
-	// Método constructor
-	public User(String nombreUsuario, String nombre, String apellido, String correo, String contraseñaHash, String id,
-			String ubicacion) {
-		this.nombreUsuario = nombreUsuario;
-		this.nombre = nombre;
-		this.apellido = apellido;
-		this.correo = correo;
-		this.contraseñaHash = contraseñaHash;
-		this.id = id;
-		this.ubicacion = ubicacion;
+    
+    // Constructor
+    
+    public User(String nombreUsuario, String nombre, String apellido, String correo, 
+                String contraseñaHash, String id, String ubicacion) {
 
-		// Inicialización de nuevos atributos
-		this.reputacion = 0.0;
-		this.numeroCalificaciones = 0;
-		this.historialTransacciones = new ArrayList<>();
-		this.rol = RolUsuario.USUARIO; // Por defecto es usuario regular
-	}
+        this.nombreUsuario = nombreUsuario;
+        this.nombre = nombre;
+        this.apellido = apellido;
+        this.correo = correo;
+        this.contraseñaHash = contraseñaHash;
+        this.id = id;
+        this.ubicacion = ubicacion;
 
-	// Métodos de Lógica de Negocio (Dominio)
+        // Inicialización
+        this.reputacion = 0.0;
+        this.numeroCalificaciones = 0;
+        this.historialTransacciones = new ArrayList<>();
+        this.rol = RolUsuario.USUARIO;
+    }
 
-	public void calificar(int estrellas) {
-		if (estrellas < 1 || estrellas > 5)
-			return;
+    
+    // Métodos de Lógica de Usuario
+    
 
-		double totalPuntos = (this.reputacion * this.numeroCalificaciones) + estrellas;
-		this.numeroCalificaciones++;
-		this.reputacion = totalPuntos / this.numeroCalificaciones;
-	}
+    /** Añade una calificación al usuario. */
+    public void calificar(int estrellas) {
+        if (estrellas < 1 || estrellas > 5)
+            return;
 
-	public void agregarTransaccion(String idPublicacion) {
-		if (this.historialTransacciones == null) {
-			this.historialTransacciones = new ArrayList<>();
-		}
-		this.historialTransacciones.add(idPublicacion);
-	}
+        double totalPuntos = (this.reputacion * this.numeroCalificaciones) + estrellas;
+        this.numeroCalificaciones++;
+        this.reputacion = totalPuntos / this.numeroCalificaciones;
+    }
 
-	// Getters y Setters
-	public String getNombreUsuario() {
-		return nombreUsuario;
-	}
+    /** Agrega una transacción al historial. */
+    public void agregarTransaccion(String idPublicacion) {
+        if (this.historialTransacciones == null) {
+            this.historialTransacciones = new ArrayList<>();
+        }
+        this.historialTransacciones.add(idPublicacion);
+    }
 
-	public void setNombreUsuario(String nombreUsuario) {
-		this.nombreUsuario = nombreUsuario;
-	}
+    /** Devuelve nombre completo (útil en chat y UI). */
+    public String getNombreCompleto() {
+        return nombre + " " + apellido;
+    }
 
-	public String getNombre() {
-		return nombre;
-	}
+    /** Retorna historial como lista inmutable para evitar manipulaciones externas. */
+    public List<String> getHistorialTransacciones() {
+        return Collections.unmodifiableList(historialTransacciones);
+    }
 
-	public void setNombre(String nombre) {
-		this.nombre = nombre;
-	}
+    
+    // Getters y Setters
+    
 
-	public String getApellido() {
-		return apellido;
-	}
+    public String getNombreUsuario() {
+        return nombreUsuario;
+    }
 
-	public void setApellido(String apellido) {
-		this.apellido = apellido;
-	}
+    public void setNombreUsuario(String nombreUsuario) {
+        this.nombreUsuario = nombreUsuario;
+    }
 
-	public String getCorreo() {
-		return correo;
-	}
+    public String getNombre() {
+        return nombre;
+    }
 
-	public void setCorreo(String correo) {
-		this.correo = correo;
-	}
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
 
-	public String getContraseñaHash() {
-		return contraseñaHash;
-	}
+    public String getApellido() {
+        return apellido;
+    }
 
-	public void setContraseñaHash(String contraseñaHash) {
-		this.contraseñaHash = contraseñaHash;
-	}
+    public void setApellido(String apellido) {
+        this.apellido = apellido;
+    }
 
-	public String getId() {
-		return id;
-	}
+    public String getCorreo() {
+        return correo;
+    }
 
-	public void setId(String id) {
-		this.id = id;
-	}
+    public void setCorreo(String correo) {
+        this.correo = correo;
+    }
 
-	public String getUbicacion() {
-		return ubicacion;
-	}
+    public String getContraseñaHash() {
+        return contraseñaHash;
+    }
 
-	public void setUbicacion(String ubicacion) {
-		this.ubicacion = ubicacion;
-	}
+    public void setContraseñaHash(String contraseñaHash) {
+        this.contraseñaHash = contraseñaHash;
+    }
 
-	public double getReputacion() {
-		return reputacion;
-	}
+    public String getId() {
+        return id;
+    }
 
-	public int getNumeroCalificaciones() {
-		return numeroCalificaciones;
-	}
+    public void setId(String id) {
+        this.id = id;
+    }
 
-	public List<String> getHistorialTransacciones() {
-		return historialTransacciones;
-	}
+    public String getUbicacion() {
+        return ubicacion;
+    }
 
-	// Métodos para rol
-	public RolUsuario getRol() {
-		return rol;
-	}
+    public void setUbicacion(String ubicacion) {
+        this.ubicacion = ubicacion;
+    }
 
-	public void setRol(RolUsuario rol) {
-		this.rol = rol;
-	}
+    public double getReputacion() {
+        return reputacion;
+    }
 
-	public boolean isAdmin() {
-		return this.rol == RolUsuario.ADMIN;
-	}
+    public int getNumeroCalificaciones() {
+        return numeroCalificaciones;
+    }
+
+    public RolUsuario getRol() {
+        return rol;
+    }
+
+    public void setRol(RolUsuario rol) {
+        this.rol = rol;
+    }
+
+    public boolean isAdmin() {
+        return this.rol == RolUsuario.ADMIN;
+    }
+
+   
+    // Métodos imprescindibles para Chat y persistencia
+    
+
+    /** Basado estrictamente en ID para que ChatController pueda comparar usuarios. */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        User other = (User) obj;
+        return id != null && id.equals(other.id);
+    }
+
+    /** Debe acompañar siempre a equals. */
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
+
+    /** Para debug y logs. */
+    @Override
+    public String toString() {
+        return "User{" +
+                "id='" + id + '\'' +
+                ", nombre='" + nombre + '\'' +
+                ", apellido='" + apellido + '\'' +
+                ", usuario='" + nombreUsuario + '\'' +
+                '}';
+    }
 }

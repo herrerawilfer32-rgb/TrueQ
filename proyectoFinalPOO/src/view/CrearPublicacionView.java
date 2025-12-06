@@ -51,7 +51,7 @@ public class CrearPublicacionView extends JFrame {
         panelForm.add(new JScrollPane(txtDescripcion));
 
         panelForm.add(new JLabel("Tipo de Publicación:"));
-        cmbTipo = new JComboBox<>(new String[] { "SUBASTA", "TRUEQUE" });
+        cmbTipo = new JComboBox<>(new String[]{"SUBASTA", "TRUEQUE"});
         panelForm.add(cmbTipo);
 
         // --- Panel Dinámico (Cambia según el combo) ---
@@ -93,14 +93,28 @@ public class CrearPublicacionView extends JFrame {
 
         add(panelForm, BorderLayout.CENTER);
 
-        // --- Botón Guardar ---
+        // =======================================================
+        //         🆕 PANEL INFERIOR CON BOTÓN CERRAR + PUBLICAR
+        // =======================================================
+
+        JPanel panelInferior = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+
+        JButton btnCerrar = new JButton("Cerrar");
+        btnCerrar.setBackground(new Color(200, 50, 50));
+        btnCerrar.setForeground(Color.WHITE);
+        btnCerrar.setFont(new Font("Arial", Font.BOLD, 13));
+        btnCerrar.addActionListener(e -> dispose());
+
         JButton btnPublicar = new JButton("PUBLICAR AHORA");
         btnPublicar.setBackground(new Color(46, 204, 113));
         btnPublicar.setForeground(Color.WHITE);
         btnPublicar.setFont(new Font("Arial", Font.BOLD, 14));
-
         btnPublicar.addActionListener(e -> manejarPublicacion());
-        add(btnPublicar, BorderLayout.SOUTH);
+
+        panelInferior.add(btnCerrar);
+        panelInferior.add(btnPublicar);
+
+        add(panelInferior, BorderLayout.SOUTH);
     }
 
     private void seleccionarImagenes() {
@@ -132,12 +146,10 @@ public class CrearPublicacionView extends JFrame {
             cardFoto.setPreferredSize(new Dimension(80, 80));
             cardFoto.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 
-            // Cargar y mostrar preview
             javax.swing.ImageIcon icon = util.ImageUtils.loadImage(ruta, 75, 75);
             JLabel lblFoto = new JLabel(icon);
             lblFoto.setHorizontalAlignment(SwingConstants.CENTER);
 
-            // Botón para eliminar
             JButton btnEliminar = new JButton("X");
             btnEliminar.setFont(new Font("Arial", Font.BOLD, 10));
             btnEliminar.setPreferredSize(new Dimension(20, 20));
@@ -162,7 +174,6 @@ public class CrearPublicacionView extends JFrame {
         String desc = txtDescripcion.getText().trim();
         String tipo = (String) cmbTipo.getSelectedItem();
 
-        // Validar campos comunes
         String errorMessage = validarCamposComunes(titulo, desc);
         if (errorMessage != null) {
             JOptionPane.showMessageDialog(this, errorMessage, "Error de Validación", JOptionPane.ERROR_MESSAGE);
@@ -174,7 +185,6 @@ public class CrearPublicacionView extends JFrame {
         if (tipo.equals("SUBASTA")) {
             String precioTexto = txtPrecio.getText().trim();
 
-            // Validar precio
             errorMessage = validarPrecioSubasta(precioTexto);
             if (errorMessage != null) {
                 JOptionPane.showMessageDialog(this, errorMessage, "Error de Validación", JOptionPane.ERROR_MESSAGE);
@@ -187,12 +197,11 @@ public class CrearPublicacionView extends JFrame {
                     desc,
                     vendedor,
                     precio,
-                    7, // días de duración
+                    7,
                     new ArrayList<>(fotosSeleccionadas));
         } else {
             String deseos = txtDeseos.getText().trim();
 
-            // Validar qué busca
             errorMessage = validarDeseosTrueque(deseos);
             if (errorMessage != null) {
                 JOptionPane.showMessageDialog(this, errorMessage, "Error de Validación", JOptionPane.ERROR_MESSAGE);
@@ -208,10 +217,9 @@ public class CrearPublicacionView extends JFrame {
         }
 
         if (exito) {
-            // Advertencia si no hay fotos
             if (fotosSeleccionadas.isEmpty()) {
                 JOptionPane.showMessageDialog(this,
-                        "Artículo publicado con éxito.\nNota: No agregaste fotos. Se recomienda agregar imágenes para atraer más compradores.",
+                        "Artículo publicado con éxito.\nNota: No agregaste fotos.",
                         "Publicación Exitosa",
                         JOptionPane.INFORMATION_MESSAGE);
             } else {
@@ -224,11 +232,7 @@ public class CrearPublicacionView extends JFrame {
         }
     }
 
-    /**
-     * Valida los campos comunes (título y descripción).
-     */
     private String validarCamposComunes(String titulo, String desc) {
-        // Validar título
         if (!util.ValidationUtils.isNotEmpty(titulo)) {
             return "El título es obligatorio";
         }
@@ -236,7 +240,6 @@ public class CrearPublicacionView extends JFrame {
             return "El título debe tener entre 5 y 100 caracteres";
         }
 
-        // Validar descripción
         if (!util.ValidationUtils.isNotEmpty(desc)) {
             return "La descripción es obligatoria";
         }
@@ -247,9 +250,6 @@ public class CrearPublicacionView extends JFrame {
         return null;
     }
 
-    /**
-     * Valida el precio para subastas.
-     */
     private String validarPrecioSubasta(String precioTexto) {
         if (!util.ValidationUtils.isNotEmpty(precioTexto)) {
             return "El precio mínimo es obligatorio";
@@ -271,9 +271,6 @@ public class CrearPublicacionView extends JFrame {
         return null;
     }
 
-    /**
-     * Valida el campo "qué buscas" para trueques.
-     */
     private String validarDeseosTrueque(String deseos) {
         if (!util.ValidationUtils.isNotEmpty(deseos)) {
             return "Debes especificar qué buscas a cambio";
@@ -286,3 +283,4 @@ public class CrearPublicacionView extends JFrame {
         return null;
     }
 }
+

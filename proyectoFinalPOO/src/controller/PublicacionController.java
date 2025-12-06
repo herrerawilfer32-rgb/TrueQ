@@ -170,4 +170,33 @@ public class PublicacionController {
     private String generarIdOferta() {
         return "OFE-" + System.currentTimeMillis();
     }
+    /**
+     * Obtiene la puja actual de una publicación de subasta.
+     *
+     * @param subasta Publicación de tipo subasta.
+     * @return Monto actual de la puja.
+     */
+    public double obtenerPujaActualSubasta(model.PublicacionSubasta subasta) {
+        if (subasta == null) {
+            throw new IllegalArgumentException("La subasta no puede ser nula.");
+        }
+        return ofertaService.calcularPujaActualSubasta(
+                subasta.getIdArticulo(),
+                subasta.getPrecioMinimo()
+        );
+    }
+
+    /**
+     * Calcula el incremento rápido del 10% sobre el precio inicial de la subasta.
+     *
+     * @param subasta Publicación de tipo subasta.
+     * @return Valor del incremento.
+     */
+    public double calcularIncrementoRapidoSubasta(model.PublicacionSubasta subasta) {
+        if (subasta == null) {
+            throw new IllegalArgumentException("La subasta no puede ser nula.");
+        }
+        return ofertaService.calcularIncrementoRapidoSubasta(subasta.getPrecioMinimo());
+    }
+
 }

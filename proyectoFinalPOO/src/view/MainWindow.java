@@ -102,7 +102,35 @@ public class MainWindow extends JFrame {
         panelDerechoHeader.add(btnLoginLogout);
 
         header.add(lblBienvenida, BorderLayout.WEST);
-        header.add(panelDerechoHeader, BorderLayout.EAST);
+     // Panel derecho para Cerrar Sesión + Salir
+        JPanel panelDerecha = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        panelDerecha.setOpaque(false);
+
+        // Botón Cerrar Sesión (el que ya tenías)
+        panelDerecha.add(btnLoginLogout);
+
+        // Botón Salir del Programa
+        JButton btnSalir = new JButton("Salir");
+        btnSalir.setBackground(new Color(192, 57, 43));
+        btnSalir.setForeground(Color.WHITE);
+        btnSalir.setFont(new Font("SansSerif", Font.BOLD, 12));
+        btnSalir.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "¿Deseas salir del programa?",
+                    "Confirmar salida",
+                    JOptionPane.YES_NO_OPTION
+            );
+            if (confirm == JOptionPane.YES_OPTION) {
+                System.exit(0);
+            }
+        });
+
+        panelDerecha.add(btnSalir);
+
+        // Agregar panel al header
+        header.add(panelDerecha, BorderLayout.EAST);
+
         add(header, BorderLayout.NORTH);
 
         // --- CENTRO: PESTAÑAS (Publicaciones + Chats) ---
@@ -157,6 +185,7 @@ public class MainWindow extends JFrame {
         JButton btnVerDetalle = new JButton("👁️ Ver Detalle");
         JButton btnEditar = new JButton("✏️ Editar");
         JButton btnEliminar = new JButton("🗑️ Eliminar");
+        JButton btnSalirApp = new JButton("Salir");
 
         // LOGICA DEL "PORTERO" (GATEKEEPER)
         btnVender.addActionListener(e -> {
@@ -178,7 +207,8 @@ public class MainWindow extends JFrame {
         btnVerDetalle.addActionListener(e -> verDetalleSeleccionado());
         btnEliminar.addActionListener(e -> eliminarPublicacionSeleccionada());
         btnEditar.addActionListener(e -> editarPublicacionSeleccionada());
-
+        btnSalirApp.addActionListener(e -> cerrarAplicacion());
+        
         footer.add(btnVender);
         footer.add(btnMisOfertas);
         footer.add(btnRefrescar);
@@ -186,6 +216,7 @@ public class MainWindow extends JFrame {
         footer.add(btnVerDetalle);
         footer.add(btnEditar);
         footer.add(btnEliminar);
+        footer.add(btnSalirApp);  
 
         add(footer, BorderLayout.SOUTH);
     }
@@ -445,6 +476,22 @@ public class MainWindow extends JFrame {
             btnNotificaciones.setVisible(true);
         } else {
             btnNotificaciones.setVisible(false);
+        }
+    }
+    /**
+     * Cierra la aplicación completa pidiendo confirmación al usuario.
+     */
+    private void cerrarAplicacion() {
+        int opcion = JOptionPane.showConfirmDialog(
+                this,
+                "¿Deseas salir de la aplicación?",
+                "Confirmar salida",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (opcion == JOptionPane.YES_OPTION) {
+            dispose();        // Cierra la ventana principal
+            System.exit(0);   // Termina el proceso Java
         }
     }
 }
