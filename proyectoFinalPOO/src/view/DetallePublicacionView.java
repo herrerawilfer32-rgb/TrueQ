@@ -9,6 +9,7 @@ import model.User;
 import model.Oferta;
 import util.TipoPublicacion;
 import util.TipoReporte;
+import util.EstadoPublicacion;
 
 import javax.swing.*;
 import java.awt.*;
@@ -106,6 +107,17 @@ public class DetallePublicacionView extends JFrame {
             configurarSeccionSubasta(panelInfo);
         } else {
             configurarSeccionTrueque(panelInfo);
+        }
+        
+     // MENSAJE: "La subasta ha cerrado" para NO dueños en subasta cerrada
+        if (publicacion.getTipoPublicacion() == TipoPublicacion.SUBASTA
+                && publicacion.getEstado() != EstadoPublicacion.ACTIVA
+                && (usuarioActual == null || !publicacion.getIdVendedor().equals(usuarioActual.getId()))) {
+            JLabel lblCerrada = new JLabel("La subasta ha cerrado");
+            lblCerrada.setForeground(Color.RED);
+            lblCerrada.setFont(lblCerrada.getFont().deriveFont(Font.BOLD));
+            panelInfo.add(Box.createVerticalStrut(5));
+            panelInfo.add(lblCerrada);
         }
 
         // Imágenes (solo rutas por ahora)

@@ -16,32 +16,54 @@ public class Mensaje implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    
+    /**
+     * Tipo de mensaje, para distinguir mensajes normales de los que
+     * muestran botones especiales en la interfaz (pagar, sí/no, etc.).
+     */
+    public enum TipoMensaje {
+        NORMAL,
+        BOTON_PAGAR_SUBASTA,
+        BOTON_CONFIRMAR_TRUEQUE
+    }
+
     // Atributos principales
-   
     private final String identificadorMensaje;
     private final User usuarioRemitente;
     private final String contenidoMensaje;
     private final LocalDateTime fechaHoraEnvio;
 
+    // Tipo de mensaje
+    private final TipoMensaje tipoMensaje;
+
+    // Id de la publicación asociada (opcional, para subasta/trueque)
+    private final String idPublicacionAsociada;
+
     // Lista de imágenes adjuntas (opcional)
     private List<String> imagesPaths;
 
     /**
-     * Constructor principal de la clase Mensaje.
-     *
-     * @param identificadorMensaje Identificador único del mensaje.
-     * @param usuarioRemitente     Usuario que envía el mensaje.
-     * @param contenidoMensaje     Contenido textual del mensaje.
-     * @param fechaHoraEnvio       Fecha y hora en la que se envía el mensaje.
+     * Constructor "clásico" → mensaje NORMAL, sin publicación asociada.
      */
     public Mensaje(
             String identificadorMensaje,
             User usuarioRemitente,
             String contenidoMensaje,
             LocalDateTime fechaHoraEnvio) {
+        this(identificadorMensaje, usuarioRemitente, contenidoMensaje, fechaHoraEnvio,
+                TipoMensaje.NORMAL, null);
+    }
 
-        // Validaciones necesarias
+    /**
+     * Constructor extendido, permitiendo indicar tipo de mensaje y publicación asociada.
+     */
+    public Mensaje(
+            String identificadorMensaje,
+            User usuarioRemitente,
+            String contenidoMensaje,
+            LocalDateTime fechaHoraEnvio,
+            TipoMensaje tipoMensaje,
+            String idPublicacionAsociada) {
+
         if (identificadorMensaje == null || identificadorMensaje.isBlank()) {
             throw new IllegalArgumentException("El identificador del mensaje no puede ser nulo ni vacío.");
         }
@@ -54,30 +76,29 @@ public class Mensaje implements Serializable {
         if (fechaHoraEnvio == null) {
             throw new IllegalArgumentException("La fecha y hora de envío no pueden ser nulas.");
         }
+        if (tipoMensaje == null) {
+            throw new IllegalArgumentException("El tipo de mensaje no puede ser nulo.");
+        }
 
         this.identificadorMensaje = identificadorMensaje.trim();
         this.usuarioRemitente = usuarioRemitente;
         this.contenidoMensaje = contenidoMensaje.trim();
         this.fechaHoraEnvio = fechaHoraEnvio;
-        this.imagesPaths = new ArrayList<>(); // lista inicial vacía
+        this.tipoMensaje = tipoMensaje;
+        this.idPublicacionAsociada = (idPublicacionAsociada != null && !idPublicacionAsociada.isBlank())
+                ? idPublicacionAsociada.trim()
+                : null;
+        this.imagesPaths = new ArrayList<>();
     }
 
-    
     // Métodos de negocio
-    
 
-    /**
-     * Agrega una imagen al mensaje.
-     */
     public void agregarImagen(String rutaImagen) {
         if (rutaImagen != null && !rutaImagen.isBlank()) {
             imagesPaths.add(rutaImagen.trim());
         }
     }
 
-    /**
-     * Permite asignar una lista completa de imágenes sin exponer referencias externas.
-     */
     public void setImagesPaths(List<String> paths) {
         if (paths == null || paths.isEmpty()) {
             this.imagesPaths = new ArrayList<>();
@@ -86,31 +107,20 @@ public class Mensaje implements Serializable {
         }
     }
 
-    /**
-     * Retorna una lista inmutable para evitar modificaciones externas.
-     */
     public List<String> getImagesPaths() {
         return Collections.unmodifiableList(imagesPaths);
     }
 
-    /**
-     * Indica si el mensaje contiene imágenes adjuntas.
-     */
     public boolean tieneImagenes() {
         return imagesPaths != null && !imagesPaths.isEmpty();
     }
 
-    /**
-     * Retorna la fecha formateada para mostrar en la interfaz.
-     */
     public String getFechaFormateada() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         return fechaHoraEnvio.format(formatter);
     }
 
-    
     // Getters
-    
 
     public String getIdentificadorMensaje() {
         return identificadorMensaje;
@@ -126,5 +136,13 @@ public class Mensaje implements Serializable {
 
     public LocalDateTime getFechaHoraEnvio() {
         return fechaHoraEnvio;
+    }
+
+    public TipoMensaje getTipoMensaje() {
+        return tipoMensaje;
+    }
+
+    public String getIdPublicacionAsociada() {
+        return idPublicacionAsociada;
     }
 }

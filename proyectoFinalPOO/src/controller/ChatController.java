@@ -21,14 +21,6 @@ public class ChatController {
     private final persistence.OfertaRepository ofertaRepository;
     private final persistence.PublicacionRepository publicacionRepository;
 
-    /**
-     * Constructor principal del controlador de chat.
-     *
-     * @param chatRepository        Repositorio a utilizar para almacenar y
-     *                              recuperar chats.
-     * @param ofertaRepository      Repositorio de ofertas.
-     * @param publicacionRepository Repositorio de publicaciones.
-     */
     public ChatController(ChatRepository chatRepository,
             persistence.OfertaRepository ofertaRepository,
             persistence.PublicacionRepository publicacionRepository) {
@@ -40,13 +32,6 @@ public class ChatController {
         this.publicacionRepository = publicacionRepository;
     }
 
-    /**
-     * Obtiene un chat existente entre dos usuarios o crea uno nuevo si no existe.
-     *
-     * @param usuarioA Primer usuario participante.
-     * @param usuarioB Segundo usuario participante.
-     * @return Chat existente o uno nuevo si no se encontró.
-     */
     public Chat obtenerOCrearChat(User usuarioA, User usuarioB) {
         validarUsuarios(usuarioA, usuarioB);
 
@@ -62,11 +47,7 @@ public class ChatController {
     }
 
     /**
-     * Envía un nuevo mensaje dentro de un chat existente.
-     *
-     * @param chat             Chat en el cual se envía el mensaje.
-     * @param remitente        Usuario que envía el mensaje.
-     * @param contenidoMensaje Contenido textual del mensaje.
+     * Envía un nuevo mensaje NORMAL dentro de un chat existente.
      */
     public void enviarMensaje(Chat chat, User remitente, String contenidoMensaje) {
         if (chat == null) {
@@ -91,11 +72,45 @@ public class ChatController {
     }
 
     /**
-     * Lista todos los chats en los que participa un usuario.
-     *
-     * @param usuario Usuario del cual se desean obtener los chats.
-     * @return Lista de chats asociados al usuario.
+     * Envía un mensaje indicando explícitamente el tipo (NORMAL, BOTON_PAGAR_SUBASTA, BOTON_CONFIRMAR_TRUEQUE),
+     * sin publicación asociada.
      */
+    public void enviarMensaje(Chat chat, User remitente, String contenidoMensaje, Mensaje.TipoMensaje tipoMensaje) {
+        enviarMensaje(chat, remitente, contenidoMensaje, tipoMensaje, null);
+    }
+
+    /**
+     * Envía un mensaje indicando tipo y id de publicación asociada (para subastas/trueques).
+     */
+    public void enviarMensaje(Chat chat, User remitente, String contenidoMensaje,
+                              Mensaje.TipoMensaje tipoMensaje,
+                              String idPublicacionAsociada) {
+        if (chat == null) {
+            throw new IllegalArgumentException("El chat no puede ser nulo.");
+        }
+        if (remitente == null) {
+            throw new IllegalArgumentException("El remitente no puede ser nulo.");
+        }
+        if (contenidoMensaje == null || contenidoMensaje.isBlank()) {
+            throw new IllegalArgumentException("El contenido del mensaje no puede ser nulo ni vacío.");
+        }
+        if (tipoMensaje == null) {
+            throw new IllegalArgumentException("El tipo de mensaje no puede ser nulo.");
+        }
+
+        String identificadorMensaje = UUID.randomUUID().toString();
+        Mensaje mensaje = new Mensaje(
+                identificadorMensaje,
+                remitente,
+                contenidoMensaje.trim(),
+                LocalDateTime.now(),
+                tipoMensaje,
+                idPublicacionAsociada);
+
+        chat.agregarMensaje(mensaje);
+        chatRepository.guardarChat(chat);
+    }
+
     public List<Chat> listarChatsDeUsuario(User usuario) {
         if (usuario == null) {
             throw new IllegalArgumentException("El usuario no puede ser nulo.");
@@ -103,9 +118,6 @@ public class ChatController {
         return chatRepository.listarChatsDeUsuario(usuario);
     }
 
-    /**
-     * Retorna la lista de mensajes del chat.
-     */
     public List<Mensaje> obtenerMensajes(Chat chat) {
         if (chat == null) {
             throw new IllegalArgumentException("El chat no puede ser nulo.");
@@ -113,9 +125,6 @@ public class ChatController {
         return chat.getListaMensajes();
     }
 
-    /**
-     * Marca un chat como leído.
-     */
     public void marcarChatComoLeido(Chat chat) {
         if (chat == null)
             return;
@@ -123,14 +132,6 @@ public class ChatController {
         chatRepository.guardarChat(chat);
     }
 
-    /**
-     * Obtiene las ofertas relacionadas entre los dos usuarios del chat.
-     * Busca ofertas donde:
-     * 1. El emisor del chat es el ofertante y el receptor es el dueño de la
-     * publicación.
-     * 2. El receptor del chat es el ofertante y el emisor es el dueño de la
-     * publicación.
-     */
     public List<model.Oferta> obtenerOfertasRelacionadas(Chat chat) {
         if (chat == null) {
             return new ArrayList<>();
@@ -141,7 +142,6 @@ public class ChatController {
 
         List<model.Oferta> todasLasOfertas = new ArrayList<>();
 
-        // Ofertas de U1
         List<model.Oferta> ofertasU1 = ofertaRepository.buscarOfertasPorOfertante(u1.getId());
         for (model.Oferta o : ofertasU1) {
             model.Publicacion p = publicacionRepository.buscarPorIdArticulo(o.getIdPublicacion());
@@ -150,7 +150,6 @@ public class ChatController {
             }
         }
 
-        // Ofertas de U2
         List<model.Oferta> ofertasU2 = ofertaRepository.buscarOfertasPorOfertante(u2.getId());
         for (model.Oferta o : ofertasU2) {
             model.Publicacion p = publicacionRepository.buscarPorIdArticulo(o.getIdPublicacion());
@@ -162,14 +161,9 @@ public class ChatController {
         return todasLasOfertas;
     }
 
-    /**
-     * Obtiene todos los chats de un usuario.
-     */
     public List<Chat> obtenerChatsDeUsuario(User usuario) {
         return listarChatsDeUsuario(usuario);
     }
-
-    // Métodos privados de validación
 
     private void validarUsuarios(User usuarioA, User usuarioB) {
         if (usuarioA == null || usuarioB == null) {

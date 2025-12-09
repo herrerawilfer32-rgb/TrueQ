@@ -163,6 +163,8 @@ public class MainWindow extends JFrame {
         });
 
         panelChatDetalle = new PanelChatDetalle(chatController);
+        panelChatDetalle.setPublicacionController(pubController);
+
 
         JSplitPane splitChats = new JSplitPane(
                 JSplitPane.HORIZONTAL_SPLIT,

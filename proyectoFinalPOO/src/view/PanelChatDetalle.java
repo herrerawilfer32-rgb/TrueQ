@@ -1,6 +1,7 @@
 package view;
 
 import controller.ChatController;
+import controller.PublicacionController;
 import model.User;
 import model.chat.Chat;
 import model.chat.Mensaje;
@@ -12,36 +13,29 @@ import java.time.format.DateTimeFormatter;
 /**
  * Panel que muestra el detalle de un chat (conversación) y permite
  * enviar nuevos mensajes.
- *
- * Este panel depende de:
- * - Un ChatController para la lógica de negocio.
- * - Un User (usuarioActual) para saber quién envía los mensajes.
- * - Un Chat (chatActual) que es la conversación que se está visualizando.
  */
 public class PanelChatDetalle extends JPanel {
 
-    // ---------------------------------------------------------
     // Atributos de negocio
-    // ---------------------------------------------------------
     private ChatController chatController;
+    private PublicacionController publicacionController; // NUEVO: para pagos/intercambios
     private User usuarioActual;
     private Chat chatActual;
 
-    // ---------------------------------------------------------
-    // Componentes de la interfaz gráfica
-    // ---------------------------------------------------------
+    // Componentes de la interfaz
     private JTextArea areaConversacion;
     private JTextField campoNuevoMensaje;
     private JButton botonEnviar;
 
+    // Panel para botones especiales (Pagar / Sí / No)
+    private JPanel panelAccionesEspeciales;
+
+    // Últimos mensajes especiales detectados
+    private Mensaje ultimoMensajePagar;
+    private Mensaje ultimoMensajeConfirmarTrueque;
+
     private final DateTimeFormatter formatoHora = DateTimeFormatter.ofPattern("HH:mm");
 
-    /**
-     * Constructor principal del panel de detalle de chat.
-     *
-     * @param chatController Controlador de chat para gestionar el envío de
-     *                       mensajes.
-     */
     public PanelChatDetalle(ChatController chatController) {
         if (chatController == null) {
             throw new IllegalArgumentException("El controlador de chat no puede ser nulo.");
@@ -52,28 +46,18 @@ public class PanelChatDetalle extends JPanel {
         configurarEventos();
     }
 
-    // ---------------------------------------------------------
-    // Métodos públicos
-    // ---------------------------------------------------------
-
     /**
-     * Establece el usuario actual (logueado) que enviará los mensajes
-     * desde este panel.
-     *
-     * @param usuarioActual Usuario logueado o null si se encuentra en modo
-     *                      invitado.
+     * Permite inyectar el PublicacionController para poder
+     * realizar acciones como finalizar subasta o concretar intercambio.
      */
+    public void setPublicacionController(PublicacionController publicacionController) {
+        this.publicacionController = publicacionController;
+    }
+
     public void setUsuarioActual(User usuarioActual) {
         this.usuarioActual = usuarioActual;
     }
 
-    /**
-     * Establece el chat que se debe mostrar en el panel.
-     * Al asignar un nuevo chat, se recarga el área de conversación
-     * y se marca el chat como leído.
-     *
-     * @param chat Chat a visualizar.
-     */
     public void setChatActual(Chat chat) {
         this.chatActual = chat;
 
@@ -84,23 +68,16 @@ public class PanelChatDetalle extends JPanel {
         recargarConversacion();
     }
 
-    /**
-     * Limpia el chat actual (usado al cerrar sesión)
-     */
     public void clearChat() {
         this.chatActual = null;
         areaConversacion.setText("");
+        actualizarPanelAccionesEspeciales(null, null);
     }
-
-    // ---------------------------------------------------------
-    // Inicialización UI
-    // ---------------------------------------------------------
 
     private void inicializarComponentes() {
         setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Área de conversación: solo lectura, con salto de línea automático
         areaConversacion = new JTextArea();
         areaConversacion.setEditable(false);
         areaConversacion.setLineWrap(true);
@@ -109,9 +86,12 @@ public class PanelChatDetalle extends JPanel {
         JScrollPane scrollConversacion = new JScrollPane(areaConversacion);
         add(scrollConversacion, BorderLayout.CENTER);
 
+        // Panel de acciones especiales (arriba del campo de texto)
+        panelAccionesEspeciales = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelAccionesEspeciales.setVisible(false);
+
         // Panel inferior: campo de texto + botón "Enviar"
         JPanel panelInferior = new JPanel(new BorderLayout(5, 5));
-
         campoNuevoMensaje = new JTextField();
         botonEnviar = new JButton("Enviar");
 
@@ -121,7 +101,12 @@ public class PanelChatDetalle extends JPanel {
         panelInferior.add(campoNuevoMensaje, BorderLayout.CENTER);
         panelInferior.add(panelBoton, BorderLayout.EAST);
 
-        add(panelInferior, BorderLayout.SOUTH);
+        // Contenedor SUR: primero botones especiales, luego campo de escribir
+        JPanel panelSur = new JPanel(new BorderLayout(5, 5));
+        panelSur.add(panelAccionesEspeciales, BorderLayout.NORTH);
+        panelSur.add(panelInferior, BorderLayout.SOUTH);
+
+        add(panelSur, BorderLayout.SOUTH);
 
         // Panel Superior: Botón de Ver Ofertas
         JPanel panelSuperior = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -142,7 +127,7 @@ public class PanelChatDetalle extends JPanel {
         }
 
         JPanel panelOfertas = new JPanel();
-        panelOfertas.setLayout(new javax.swing.BoxLayout(panelOfertas, javax.swing.BoxLayout.Y_AXIS));
+        panelOfertas.setLayout(new BoxLayout(panelOfertas, BoxLayout.Y_AXIS));
 
         for (model.Oferta o : ofertas) {
             JPanel card = new JPanel(new BorderLayout());
@@ -187,9 +172,7 @@ public class PanelChatDetalle extends JPanel {
 
         JPanel panelImg = new JPanel();
         for (String ruta : rutas) {
-            // Intentar cargar imagen
             ImageIcon icon = new ImageIcon(ruta);
-            // Redimensionar si es muy grande
             Image img = icon.getImage();
             Image newImg = img.getScaledInstance(200, 200, java.awt.Image.SCALE_SMOOTH);
             panelImg.add(new JLabel(new ImageIcon(newImg)));
@@ -200,21 +183,10 @@ public class PanelChatDetalle extends JPanel {
     }
 
     private void configurarEventos() {
-        // Enviar al presionar el botón
         botonEnviar.addActionListener(e -> enviarMensajeDesdeCampo());
-
-        // Enviar al presionar Enter en el campo de texto
         campoNuevoMensaje.addActionListener(e -> enviarMensajeDesdeCampo());
     }
 
-    // ---------------------------------------------------------
-    // Lógica de negocio de la vista
-    // ---------------------------------------------------------
-
-    /**
-     * Envía el mensaje escrito en el campo de texto utilizando el controlador
-     * de chat. Solo se envía si existe un chatActual y un usuarioActual.
-     */
     private void enviarMensajeDesdeCampo() {
         if (chatActual == null) {
             return;
@@ -238,14 +210,19 @@ public class PanelChatDetalle extends JPanel {
     }
 
     /**
-     * Recarga el área de conversación con todos los mensajes del chatActual.
+     * Recarga el área de conversación y detecta mensajes especiales
+     * para mostrar botones de acción (pagar / sí-no).
      */
     private void recargarConversacion() {
         areaConversacion.setText("");
 
         if (chatActual == null) {
+            actualizarPanelAccionesEspeciales(null, null);
             return;
         }
+
+        Mensaje msgPagar = null;
+        Mensaje msgTrueque = null;
 
         for (Mensaje mensaje : chatController.obtenerMensajes(chatActual)) {
             String nombre = mensaje.getUsuarioRemitente().getNombre();
@@ -253,9 +230,101 @@ public class PanelChatDetalle extends JPanel {
             String contenido = mensaje.getContenidoMensaje();
 
             areaConversacion.append(nombre + " (" + hora + "): " + contenido + "\n");
+
+            // Detectar mensajes especiales dirigidos al usuarioActual
+            if (usuarioActual != null && !mensaje.getUsuarioRemitente().equals(usuarioActual)) {
+                if (mensaje.getTipoMensaje() == Mensaje.TipoMensaje.BOTON_PAGAR_SUBASTA) {
+                    msgPagar = mensaje;
+                } else if (mensaje.getTipoMensaje() == Mensaje.TipoMensaje.BOTON_CONFIRMAR_TRUEQUE) {
+                    msgTrueque = mensaje;
+                }
+            }
         }
 
-        // Scroll automático al final
         areaConversacion.setCaretPosition(areaConversacion.getDocument().getLength());
+        actualizarPanelAccionesEspeciales(msgPagar, msgTrueque);
+    }
+
+    /**
+     * Actualiza el panel de acciones especiales según los últimos mensajes detectados.
+     */
+    private void actualizarPanelAccionesEspeciales(Mensaje msgPagar, Mensaje msgTrueque) {
+        this.ultimoMensajePagar = msgPagar;
+        this.ultimoMensajeConfirmarTrueque = msgTrueque;
+
+        panelAccionesEspeciales.removeAll();
+        boolean visible = false;
+
+        if (ultimoMensajePagar != null) {
+            JButton btnPagar = new JButton("Pagar subasta");
+            btnPagar.addActionListener(e -> manejarPagarSubasta());
+            panelAccionesEspeciales.add(btnPagar);
+            visible = true;
+        }
+
+        if (ultimoMensajeConfirmarTrueque != null) {
+            JButton btnSi = new JButton("Sí, continuar con el trato");
+            JButton btnNo = new JButton("No, cancelar");
+
+            btnSi.addActionListener(e -> manejarAceptarTrueque());
+            btnNo.addActionListener(e -> manejarRechazarTrueque());
+
+            panelAccionesEspeciales.add(btnSi);
+            panelAccionesEspeciales.add(btnNo);
+            visible = true;
+        }
+
+        panelAccionesEspeciales.setVisible(visible);
+        panelAccionesEspeciales.revalidate();
+        panelAccionesEspeciales.repaint();
+    }
+
+    // ================== ACCIONES ESPECIALES ==================
+
+    private void manejarPagarSubasta() {
+        if (ultimoMensajePagar == null || publicacionController == null || usuarioActual == null) {
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo procesar el pago. Falta información del usuario o publicación.");
+            return;
+        }
+
+        String idPublicacion = ultimoMensajePagar.getIdPublicacionAsociada();
+        if (idPublicacion == null || idPublicacion.isBlank()) {
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo identificar la subasta asociada al mensaje.");
+            return;
+        }
+
+        publicacionController.finalizarSubastaConPago(idPublicacion, usuarioActual.getId());
+        recargarConversacion();
+    }
+
+    private void manejarAceptarTrueque() {
+        if (ultimoMensajeConfirmarTrueque == null || publicacionController == null || usuarioActual == null) {
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo concretar el intercambio. Falta información del usuario o publicación.");
+            return;
+        }
+
+        String idPublicacion = ultimoMensajeConfirmarTrueque.getIdPublicacionAsociada();
+        if (idPublicacion == null || idPublicacion.isBlank()) {
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo identificar el trueque asociado al mensaje.");
+            return;
+        }
+
+        publicacionController.concretarIntercambio(idPublicacion, usuarioActual.getId());
+        recargarConversacion();
+    }
+
+    private void manejarRechazarTrueque() {
+        if (chatActual == null || usuarioActual == null) {
+            return;
+        }
+
+        chatController.enviarMensaje(chatActual, usuarioActual,
+                "Gracias por la oferta, pero no deseo continuar con el trato.");
+        JOptionPane.showMessageDialog(this, "Has rechazado el trato.");
+        recargarConversacion();
     }
 }
