@@ -1,3 +1,8 @@
+/*
+ * Nombre de la clase: PublicacionSubasta
+ * Autor: Angel 
+ * Descripción:representa una publicación de tipo subasta, añadiendo atributos como el precio mínimo y la fecha de cierre.
+ */
 package model;
 
 import java.util.Date;
