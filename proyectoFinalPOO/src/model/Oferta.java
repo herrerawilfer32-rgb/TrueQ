@@ -1,3 +1,10 @@
+/*
+ * Nombre de la clase: Oferta
+ * Autor: Angel 
+ * Descripción: Se crea una oferta realizada sobre una publicación, con información como identificador de la oferta, el usuario ofertante, la fecha 
+ * ,monto ofrecido, la descripción del trueque, las imágenes adjuntas y el estado actual de la oferta
+ */
+
 package model;
 
 import util.EstadoOferta;
