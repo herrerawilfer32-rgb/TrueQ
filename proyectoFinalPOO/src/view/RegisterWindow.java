@@ -15,7 +15,7 @@ public class RegisterWindow extends JFrame {
     private JTextField txtCorreo;
     private JTextField txtNombre;
     private JTextField txtApellido;
-    private JTextField txtUbicacion;
+    private JTextField txtCiudad;
 
     public RegisterWindow(AuthController authController, LoginWindow loginWindow) {
         this.authController = authController;
@@ -62,9 +62,9 @@ public class RegisterWindow extends JFrame {
         txtApellido = new JTextField();
         formPanel.add(txtApellido);
 
-        formPanel.add(new JLabel("Ubicación:*"));
-        txtUbicacion = new JTextField();
-        formPanel.add(txtUbicacion);
+        formPanel.add(new JLabel("Ciudad:*"));
+        txtCiudad = new JTextField();
+        formPanel.add(txtCiudad);
 
         add(formPanel, BorderLayout.CENTER);
 
@@ -88,11 +88,11 @@ public class RegisterWindow extends JFrame {
         String correo = txtCorreo.getText().trim();
         String nombre = txtNombre.getText().trim();
         String apellido = txtApellido.getText().trim();
-        String ubicacion = txtUbicacion.getText().trim();
+        String ciudad = txtCiudad.getText().trim();
 
         // Validar campos
         String errorMessage = validarCamposRegistro(id, username, password, passwordConfirm,
-                correo, nombre, apellido, ubicacion);
+                correo, nombre, apellido, ciudad);
         if (errorMessage != null) {
             JOptionPane.showMessageDialog(this, errorMessage, "Error de Validación",
                     JOptionPane.ERROR_MESSAGE);
@@ -100,7 +100,7 @@ public class RegisterWindow extends JFrame {
         }
 
         try {
-            authController.manejarRegistro(id, username, password, correo, nombre, apellido, ubicacion);
+            authController.manejarRegistro(id, username, password, correo, nombre, apellido, ciudad);
             JOptionPane.showMessageDialog(this, "¡Registro exitoso! Ahora puedes iniciar sesión.");
             dispose();
         } catch (IllegalArgumentException e) {
@@ -119,7 +119,7 @@ public class RegisterWindow extends JFrame {
      */
     private String validarCamposRegistro(String id, String username, String password,
             String passwordConfirm, String correo,
-            String nombre, String apellido, String ubicacion) {
+            String nombre, String apellido, String ciudad) {
         // Validar cédula
         if (!util.ValidationUtils.isNotEmpty(id)) {
             return "La cédula es obligatoria";
@@ -182,12 +182,12 @@ public class RegisterWindow extends JFrame {
             return "El apellido solo puede contener letras y espacios";
         }
 
-        // Validar ubicación
-        if (!util.ValidationUtils.isNotEmpty(ubicacion)) {
-            return "La ubicación es obligatoria";
+        // Validar ciudad
+        if (!util.ValidationUtils.isNotEmpty(ciudad)) {
+            return "La ciudad es obligatoria";
         }
-        if (!util.ValidationUtils.hasMinLength(ubicacion, 3)) {
-            return "La ubicación debe tener al menos 3 caracteres";
+        if (!util.ValidationUtils.hasMinLength(ciudad, 3)) {
+            return "La ciudad debe tener al menos 3 caracteres";
         }
 
         return null; // Todo válido

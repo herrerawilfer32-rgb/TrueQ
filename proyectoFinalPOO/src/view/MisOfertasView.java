@@ -10,6 +10,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
+import util.EstadoPublicacion;
+
 public class MisOfertasView extends JFrame {
 
     private final PublicacionController controller;
@@ -29,7 +31,7 @@ public class MisOfertasView extends JFrame {
         setLayout(new BorderLayout());
 
         initComponents();
-        
+
         JButton btnCerrar = new JButton("Cerrar");
         btnCerrar.addActionListener(e -> dispose());
 
@@ -37,7 +39,7 @@ public class MisOfertasView extends JFrame {
         panelInferior.add(btnCerrar);
 
         add(panelInferior, BorderLayout.SOUTH);
-        
+
         cargarMisPublicaciones();
     }
 
@@ -45,13 +47,37 @@ public class MisOfertasView extends JFrame {
         // Panel Izquierdo: Mis Publicaciones
         listModelPublicaciones = new DefaultListModel<>();
         listaPublicaciones = new JList<>(listModelPublicaciones);
+        listaPublicaciones.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
+                    boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof Publicacion) {
+                    Publicacion p = (Publicacion) value;
+                    setText(p.getTitulo() + " [" + p.getEstado() + "]");
+                    if (p.getEstado() == EstadoPublicacion.CERRADA) {
+                        setForeground(Color.GRAY);
+                    } else {
+                        setForeground(Color.BLACK);
+                    }
+                }
+                return this;
+            }
+        });
         listaPublicaciones.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         listaPublicaciones.addListSelectionListener(e -> cargarOfertasDePublicacion());
 
+        // Panel Izquierdo: Mis Publicaciones
         JPanel panelIzq = new JPanel(new BorderLayout());
         panelIzq.setBorder(BorderFactory.createTitledBorder("Mis Publicaciones"));
+        panelIzq.setPreferredSize(new Dimension(280, 0));
+
+        // Botón actualizar
+        JButton btnActualizar = new JButton("🔄 Actualizar Lista");
+        btnActualizar.addActionListener(e -> cargarMisPublicaciones());
+
+        panelIzq.add(btnActualizar, BorderLayout.NORTH);
         panelIzq.add(new JScrollPane(listaPublicaciones), BorderLayout.CENTER);
-        panelIzq.setPreferredSize(new Dimension(250, 0));
 
         // Panel Derecho: Ofertas recibidas
         panelOfertas = new JPanel();
@@ -81,16 +107,19 @@ public class MisOfertasView extends JFrame {
             return;
         }
 
-        // Botón para cerrar subasta manualmente (si es subasta)
-        if (seleccionada.getTipoPublicacion() == TipoPublicacion.SUBASTA) {
+        // Botón para cerrar subasta manualmente (si es subasta y está ACTIVA)
+        if (seleccionada.getTipoPublicacion() == TipoPublicacion.SUBASTA
+                && seleccionada.getEstado() == EstadoPublicacion.ACTIVA) {
             JButton btnCerrarSubasta = new JButton("CERRAR SUBASTA AHORA");
             btnCerrarSubasta.setBackground(Color.ORANGE);
             btnCerrarSubasta.addActionListener(e -> {
                 controller.cerrarSubasta(seleccionada.getIdArticulo(), usuarioActual.getId());
-                cargarMisPublicaciones(); // Recargar porque ya no estará activa
+                cargarMisPublicaciones(); // Recargar estado
+                // Re-seleccionar para actualizar vista
                 panelOfertas.removeAll();
                 panelOfertas.revalidate();
                 panelOfertas.repaint();
+                JOptionPane.showMessageDialog(this, "Subasta cerrada manualmente.");
             });
             panelOfertas.add(btnCerrarSubasta);
             panelOfertas.add(Box.createVerticalStrut(10));
@@ -99,7 +128,8 @@ public class MisOfertasView extends JFrame {
         List<Oferta> ofertas = controller.obtenerOfertas(seleccionada.getIdArticulo());
 
         if (ofertas.isEmpty()) {
-            panelOfertas.add(new JLabel("No hay ofertas aún."));
+            panelOfertas.add(new JLabel("No hay ofertas registradas para esta publicación."));
+            panelOfertas.add(new JLabel("ID Publicación: " + seleccionada.getIdArticulo()));
         } else {
             for (Oferta oferta : ofertas) {
                 JPanel card = new JPanel(new BorderLayout());

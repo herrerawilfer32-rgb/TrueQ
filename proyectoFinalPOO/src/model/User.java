@@ -23,15 +23,15 @@ public class User implements Serializable {
     private double reputacion; // Promedio 0.0 - 5.0
     private int numeroCalificaciones;
     private List<String> historialTransacciones;
+    private List<String> publicacionesCalificadas; // IDs de publicaciones que ESTE usuario ha calificado
 
     // Rol del usuario (USUARIO o ADMIN)
     private RolUsuario rol;
 
-    
     // Constructor
-    
-    public User(String nombreUsuario, String nombre, String apellido, String correo, 
-                String contraseñaHash, String id, String ubicacion) {
+
+    public User(String nombreUsuario, String nombre, String apellido, String correo,
+            String contraseñaHash, String id, String ubicacion) {
 
         this.nombreUsuario = nombreUsuario;
         this.nombre = nombre;
@@ -45,12 +45,11 @@ public class User implements Serializable {
         this.reputacion = 0.0;
         this.numeroCalificaciones = 0;
         this.historialTransacciones = new ArrayList<>();
+        this.publicacionesCalificadas = new ArrayList<>();
         this.rol = RolUsuario.USUARIO;
     }
 
-    
     // Métodos de Lógica de Usuario
-    
 
     /** Añade una calificación al usuario. */
     public void calificar(int estrellas) {
@@ -70,19 +69,42 @@ public class User implements Serializable {
         this.historialTransacciones.add(idPublicacion);
     }
 
+    /** Registra que el usuario ha calificado una publicación. */
+    public void agregarPublicacionCalificada(String idPublicacion) {
+        if (this.publicacionesCalificadas == null) {
+            this.publicacionesCalificadas = new ArrayList<>();
+        }
+        if (!this.publicacionesCalificadas.contains(idPublicacion)) {
+            this.publicacionesCalificadas.add(idPublicacion);
+        }
+    }
+
+    /** Verifica si el usuario ya calificó esta publicación. */
+    public boolean haCalificadoPublicacion(String idPublicacion) {
+        if (this.publicacionesCalificadas == null)
+            return false;
+        return this.publicacionesCalificadas.contains(idPublicacion);
+    }
+
+    public List<String> getPublicacionesCalificadas() {
+        if (publicacionesCalificadas == null)
+            return new ArrayList<>();
+        return Collections.unmodifiableList(publicacionesCalificadas);
+    }
+
     /** Devuelve nombre completo (útil en chat y UI). */
     public String getNombreCompleto() {
         return nombre + " " + apellido;
     }
 
-    /** Retorna historial como lista inmutable para evitar manipulaciones externas. */
+    /**
+     * Retorna historial como lista inmutable para evitar manipulaciones externas.
+     */
     public List<String> getHistorialTransacciones() {
         return Collections.unmodifiableList(historialTransacciones);
     }
 
-    
     // Getters y Setters
-    
 
     public String getNombreUsuario() {
         return nombreUsuario;
@@ -160,15 +182,17 @@ public class User implements Serializable {
         return this.rol == RolUsuario.ADMIN;
     }
 
-   
     // Métodos imprescindibles para Chat y persistencia
-    
 
-    /** Basado estrictamente en ID para que ChatController pueda comparar usuarios. */
+    /**
+     * Basado estrictamente en ID para que ChatController pueda comparar usuarios.
+     */
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
         User other = (User) obj;
         return id != null && id.equals(other.id);
     }

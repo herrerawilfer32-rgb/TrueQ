@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import model.User;
 import model.chat.Chat;
 import model.chat.Mensaje;
+import util.EstadoOferta;
+import util.EstadoPublicacion;
 import persistence.ChatRepository;
 
 /**
@@ -179,4 +181,75 @@ public class ChatController {
             throw new IllegalArgumentException("No se puede crear un chat entre el mismo usuario.");
         }
     }
+
+    /**
+     * Obtiene las publicaciones que tienen pendiente un pago entre dos usuarios.
+     * Criterio:
+     * - Publicación CERRADA.
+     * - Vendedor es uno de los usuarios, Ganador es el otro.
+     * - La publicación aún existe (no eliminada/pagada).
+     */
+    public List<model.Publicacion> obtenerPagosPendientes(User uA, User uB) {
+        List<model.Publicacion> pendientes = new ArrayList<>();
+        if (uA == null || uB == null)
+            return pendientes;
+
+        // Revisar publicaciones donde A es vendedor y B es posible ganador
+        pendientes.addAll(buscarPagosEntre(uA, uB));
+
+        // Revisar publicaciones donde B es vendedor y A es posible ganador
+        pendientes.addAll(buscarPagosEntre(uB, uA));
+
+        return pendientes;
+    }
+
+    private List<model.Publicacion> buscarPagosEntre(User vendedor, User comprador) {
+        List<model.Publicacion> resultado = new ArrayList<>();
+        // 1. Obtener publicaciones del vendedor que estén CERRADA
+        // Como no tenemos un método "buscarCerradasPorVendedor", iteramos las del
+        // vendedor y filtramos.
+        // O mejor, iteramos todas las activas no, porque están cerradas.
+        // El repositorio de publicaciones suele tener método para buscar por vendedor.
+        // Ojo: buscarPublicacionesPorVendedor devuelve TODAS? (Activas/Cerradas).
+        // Verificaremos PublicacionRepository. De momento asumimos que sí o que podemos
+        // filtrar.
+
+        List<model.Publicacion> pubsVendedor = publicacionRepository.buscarPublicacionesPorVendedor(vendedor.getId());
+        if (pubsVendedor == null)
+            return resultado;
+
+        for (model.Publicacion p : pubsVendedor) {
+            // Incluimos CERRADA (pagos pendientes) y FINALIZADA (calificación pendiente)
+            if (p.getEstado() == EstadoPublicacion.CERRADA || p.getEstado() == EstadoPublicacion.FINALIZADA) {
+                // Caso 1: SUBASTA
+                if (p instanceof model.PublicacionSubasta) {
+                    List<model.Oferta> ofertas = ofertaRepository.buscarPorPublicacion(p.getIdArticulo());
+                    model.Oferta ganadora = null;
+                    for (model.Oferta o : ofertas) {
+                        if (o.getEstadoOferta() == EstadoOferta.ACEPTADA) {
+                            ganadora = o;
+                            break;
+                        }
+                    }
+                    if (ganadora != null && ganadora.getIdOfertante().equals(comprador.getId())) {
+                        resultado.add(p);
+                    }
+                }
+                // Caso 2: TRUEQUE
+                else if (p instanceof model.PublicacionTrueque) {
+                    // Buscar oferta aceptada
+                    List<model.Oferta> ofertas = ofertaRepository.buscarPorPublicacion(p.getIdArticulo());
+                    for (model.Oferta o : ofertas) {
+                        if (o.getEstadoOferta() == EstadoOferta.ACEPTADA
+                                && o.getIdOfertante().equals(comprador.getId())) {
+                            resultado.add(p);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return resultado;
+    }
+
 }

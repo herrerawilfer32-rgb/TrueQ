@@ -11,6 +11,8 @@ import model.User;
 import model.chat.Chat;
 import service.OfertaService;
 import service.PublicacionService;
+import controller.UserController;
+import view.PerfilUsuarioView;
 
 public class PublicacionController {
 
@@ -130,8 +132,10 @@ public class PublicacionController {
     /**
      * Aceptar oferta:
      * - Usa la lógica existente de OfertaService.
-     * - Si la publicación es de TRUEQUE, se envía mensaje al intercambiador elegido:
-     *   "¡Felicidades, he elegido hacer un trato contigo! ¿deseas continuar con el trato?"
+     * - Si la publicación es de TRUEQUE, se envía mensaje al intercambiador
+     * elegido:
+     * "¡Felicidades, he elegido hacer un trato contigo! ¿deseas continuar con el
+     * trato?"
      */
     public boolean aceptarOferta(String idOferta, String idVendedor) {
         try {
@@ -187,9 +191,10 @@ public class PublicacionController {
     /**
      * Cerrar subasta:
      * - Determina ganador (mejor oferta) y le envía mensaje:
-     *   "¡Felicidades, eres el ganador de la subasta!, realiza tu pago aquí ..."
+     * "¡Felicidades, eres el ganador de la subasta!, realiza tu pago aquí ..."
      * - A cada participante que pujó pero no ganó:
-     *   "La subasta ha cerrado, en caso de no concretar un trato podrías ser el próximo adjudicatario."
+     * "La subasta ha cerrado, en caso de no concretar un trato podrías ser el
+     * próximo adjudicatario."
      * - Luego cierra la subasta en el servicio.
      */
     public void cerrarSubasta(String idPublicacion, String idVendedor) {
@@ -282,7 +287,7 @@ public class PublicacionController {
     }
 
     // ============================================================
-    //   NUEVO: CONCRETAR INTERCAMBIO Y FINALIZAR SUBASTA CON PAGO
+    // NUEVO: CONCRETAR INTERCAMBIO Y FINALIZAR SUBASTA CON PAGO
     // ============================================================
 
     /**
@@ -290,7 +295,7 @@ public class PublicacionController {
      * - Solo puede llamarse por el dueño o por el ofertante aceptado.
      * - Elimina la publicación como se haría normalmente.
      * - Notifica a los demás ofertantes:
-     *   "El intercambio ha sido concretado con otro usuario."
+     * "El intercambio ha sido concretado con otro usuario."
      */
     public void concretarIntercambio(String idPublicacion, String idUsuarioQueConfirma) {
         try {
@@ -320,7 +325,8 @@ public class PublicacionController {
 
             User vendedor = publicacionService.obtenerUsuarioPorId(trueque.getIdVendedor());
 
-            // Notificar a los demás ofertantes que el intercambio se concretó con otro usuario
+            // Notificar a los demás ofertantes que el intercambio se concretó con otro
+            // usuario
             List<Oferta> ofertasNoAceptadas = ofertaService.obtenerOfertasNoAceptadasTrueque(idPublicacion);
             if (chatController != null && vendedor != null && ofertasNoAceptadas != null) {
                 for (Oferta oferta : ofertasNoAceptadas) {
@@ -333,9 +339,28 @@ public class PublicacionController {
                 }
             }
 
-            // Eliminar publicación "normalmente" usando el dueño como solicitante
-            publicacionService.eliminarPublicacion(idPublicacion, trueque.getIdVendedor());
-            javax.swing.JOptionPane.showMessageDialog(null, "Intercambio concretado y publicación eliminada.");
+            // Marcar publicación como FINALIZADA
+            publicacionService.finalizarPublicacion(idPublicacion);
+            javax.swing.JOptionPane.showMessageDialog(null, "Intercambio concretado exitosamente.");
+
+            // LOGICA CALIFICACION
+            int calificar = javax.swing.JOptionPane.showConfirmDialog(null,
+                    "¿Deseas calificar al usuario con quien intercambiaste?", "Calificar Usuario",
+                    javax.swing.JOptionPane.YES_NO_OPTION);
+
+            if (calificar == javax.swing.JOptionPane.YES_OPTION) {
+                User usuarioACalificar = esDueno
+                        ? publicacionService.obtenerUsuarioPorId(ofertaAceptada.getIdOfertante())
+                        : vendedor;
+
+                User usuarioCalificador = publicacionService.obtenerUsuarioPorId(idUsuarioQueConfirma);
+
+                if (usuarioACalificar != null) {
+                    new view.PerfilUsuarioView(null, usuarioACalificar,
+                            new UserController(publicacionService.getUserService()), true, idPublicacion,
+                            usuarioCalificador).setVisible(true);
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
             javax.swing.JOptionPane.showMessageDialog(null,
@@ -371,14 +396,36 @@ public class PublicacionController {
             // Mensaje al adjudicatario
             javax.swing.JOptionPane.showMessageDialog(null, "¡Felicidades eres el adjudicatario!");
 
-            // Eliminar la publicación como se haría normalmente (usando al dueño como solicitante)
-            String idVendedor = publicacion.getIdVendedor();
-            publicacionService.eliminarPublicacion(idPublicacion, idVendedor);
+            // Marcar la publicación como FINALIZADA
+            publicacionService.finalizarPublicacion(idPublicacion);
+
+            // LOGICA CALIFICACION
+            int calificar = javax.swing.JOptionPane.showConfirmDialog(null,
+                    "¿Deseas calificar al vendedor?", "Calificar Usuario", javax.swing.JOptionPane.YES_NO_OPTION);
+
+            if (calificar == javax.swing.JOptionPane.YES_OPTION) {
+                User vendedor = publicacionService.obtenerUsuarioPorId(publicacion.getIdVendedor());
+                User comprador = publicacionService.obtenerUsuarioPorId(idComprador);
+
+                if (vendedor != null) {
+                    new view.PerfilUsuarioView(null, vendedor, new UserController(publicacionService.getUserService()),
+                            true, idPublicacion, comprador).setVisible(true);
+                }
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
             javax.swing.JOptionPane.showMessageDialog(null,
                     "Error al finalizar la subasta: " + e.getMessage());
         }
+    }
+
+    public List<model.Publicacion> listarPublicacionesConFiltros(String ciudad, String tipo, Double minPrecio,
+            Double maxPrecio) {
+        return publicacionService.listarPublicacionesConFiltros(ciudad, tipo, minPrecio, maxPrecio);
+    }
+
+    public service.UserService getUserService() {
+        return publicacionService.getUserService();
     }
 }

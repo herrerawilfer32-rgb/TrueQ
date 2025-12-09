@@ -9,6 +9,8 @@ import model.User;
 import model.Oferta;
 import util.TipoPublicacion;
 import util.TipoReporte;
+import controller.UserController;
+import view.PerfilUsuarioView;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,10 +35,10 @@ public class DetallePublicacionView extends JFrame {
     private final NumberFormat formatoMoneda;
 
     public DetallePublicacionView(PublicacionController controller,
-                                  Publicacion publicacion,
-                                  User usuarioActual,
-                                  MainWindow mainWindow,
-                                  ReporteController reporteController) {
+            Publicacion publicacion,
+            User usuarioActual,
+            MainWindow mainWindow,
+            ReporteController reporteController) {
         this.controller = controller;
         this.publicacion = publicacion;
         this.usuarioActual = usuarioActual;
@@ -101,6 +103,17 @@ public class DetallePublicacionView extends JFrame {
         lblTipo.setFont(new Font("Arial", Font.ITALIC, 14));
         panelInfo.add(lblTipo);
 
+        // Vendedor Info
+        panelInfo.add(Box.createVerticalStrut(10));
+        User vendedor = controller.obtenerVendedor(publicacion.getIdArticulo());
+        String txtVendedor = "Vendedor: " + (vendedor != null ? vendedor.getNombre() : "Desconocido");
+        if (vendedor != null && vendedor.getNumeroCalificaciones() > 0) {
+            txtVendedor += String.format(" (⭐ %.1f)", vendedor.getReputacion());
+        }
+        JLabel lblVendedor = new JLabel(txtVendedor);
+        lblVendedor.setFont(new Font("Arial", Font.BOLD, 14));
+        panelInfo.add(lblVendedor);
+
         // Detalle específico según tipo
         if (publicacion.getTipoPublicacion() == TipoPublicacion.SUBASTA) {
             configurarSeccionSubasta(panelInfo);
@@ -138,7 +151,30 @@ public class DetallePublicacionView extends JFrame {
                 btnPujaRapida.setForeground(Color.WHITE);
                 btnPujaRapida.addActionListener(e -> realizarPujaRapida());
                 panelBotones.add(btnPujaRapida);
+                panelBotones.add(btnPujaRapida);
             }
+
+            JButton btnVerPerfil = new JButton("Ver Perfil");
+            btnVerPerfil.addActionListener(e -> {
+                User v = controller.obtenerVendedor(publicacion.getIdArticulo());
+                if (v != null) {
+                    // Necesitamos UserController. Crearemos una instancia rápida o lo pasamos.
+                    // Lo ideal es tenerlo inyectado, pero por ahora lo obtendremos del service (via
+                    // controller hack o nuevo metodo)
+                    // Ojo: DetallePublicacionView no tiene UserController.
+                    // Vamos a añadir un método en PublicacionController para abrir el perfil, o
+                    // instanciar UserController aquí si tuvieramos acceso al service.
+                    // Mejor opción: delegar al controlador o mainWindow.
+                    // MainWindow no tiene metodo verPerfil.
+                    // Haremos que el controlador maneje la logica de calificacion/usuario.
+                    // Pero Controller no tiene referencias a Vistas (idealmente).
+                    // Pasaremos la lógica aquí:
+                    new PerfilUsuarioView(this, v,
+                            new controller.UserController(new service.UserService(new persistence.UserRepository())),
+                            false).setVisible(true);
+                }
+            });
+            panelBotones.add(btnVerPerfil);
 
             JButton btnContactar = new JButton("Contactar vendedor");
             btnContactar.addActionListener(e -> contactarVendedor());
@@ -265,8 +301,7 @@ public class DetallePublicacionView extends JFrame {
                     usuarioActual.getId(),
                     nuevoMonto,
                     null,
-                    null
-            );
+                    null);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error al realizar la puja rápida: " + ex.getMessage(),
                     "Error", JOptionPane.ERROR_MESSAGE);
@@ -306,8 +341,7 @@ public class DetallePublicacionView extends JFrame {
                             usuarioActual.getId(),
                             monto,
                             null,
-                            null
-                    );
+                            null);
                     if (exito) {
                         JOptionPane.showMessageDialog(this, "¡Puja realizada con éxito!");
                         refrescarPujaActual();
@@ -375,8 +409,7 @@ public class DetallePublicacionView extends JFrame {
                         usuarioActual.getId(),
                         0,
                         propuesta,
-                        rutasImagenes
-                );
+                        rutasImagenes);
                 if (exito) {
                     JOptionPane.showMessageDialog(this, "¡Propuesta enviada con éxito!");
                     dialog.dispose();

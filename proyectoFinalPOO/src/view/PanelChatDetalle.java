@@ -4,6 +4,7 @@ import controller.ChatController;
 import model.User;
 import model.chat.Chat;
 import model.chat.Mensaje;
+import model.Publicacion;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,8 +25,10 @@ public class PanelChatDetalle extends JPanel {
     // Atributos de negocio
     // ---------------------------------------------------------
     private ChatController chatController;
+    private controller.PublicacionController pubController;
     private User usuarioActual;
     private Chat chatActual;
+    private JPanel panelAlertas;
 
     // ---------------------------------------------------------
     // Componentes de la interfaz gráfica
@@ -42,11 +45,12 @@ public class PanelChatDetalle extends JPanel {
      * @param chatController Controlador de chat para gestionar el envío de
      *                       mensajes.
      */
-    public PanelChatDetalle(ChatController chatController) {
+    public PanelChatDetalle(ChatController chatController, controller.PublicacionController pubController) {
         if (chatController == null) {
             throw new IllegalArgumentException("El controlador de chat no puede ser nulo.");
         }
         this.chatController = chatController;
+        this.pubController = pubController;
 
         inicializarComponentes();
         configurarEventos();
@@ -79,6 +83,10 @@ public class PanelChatDetalle extends JPanel {
 
         if (chatActual != null) {
             chatController.marcarChatComoLeido(chatActual);
+            verificarPagosPendientes();
+        } else {
+            if (panelAlertas != null)
+                panelAlertas.removeAll();
         }
 
         recargarConversacion();
@@ -90,6 +98,11 @@ public class PanelChatDetalle extends JPanel {
     public void clearChat() {
         this.chatActual = null;
         areaConversacion.setText("");
+        if (panelAlertas != null) {
+            panelAlertas.removeAll();
+            panelAlertas.revalidate();
+            panelAlertas.repaint();
+        }
     }
 
     // ---------------------------------------------------------
@@ -123,12 +136,137 @@ public class PanelChatDetalle extends JPanel {
 
         add(panelInferior, BorderLayout.SOUTH);
 
-        // Panel Superior: Botón de Ver Ofertas
-        JPanel panelSuperior = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        // Panel Superior: Botón de Ver Ofertas y Alertas
+        JPanel panelSuperiorContainer = new JPanel(new BorderLayout());
+
+        panelAlertas = new JPanel();
+        panelAlertas.setLayout(new BoxLayout(panelAlertas, BoxLayout.Y_AXIS));
+        panelSuperiorContainer.add(panelAlertas, BorderLayout.CENTER);
+
+        JPanel panelBotonesSup = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton btnVerOfertas = new JButton("Ver Ofertas Relacionadas");
         btnVerOfertas.addActionListener(e -> mostrarOfertasRelacionadas());
-        panelSuperior.add(btnVerOfertas);
-        add(panelSuperior, BorderLayout.NORTH);
+        panelBotonesSup.add(btnVerOfertas);
+
+        panelSuperiorContainer.add(panelBotonesSup, BorderLayout.EAST);
+
+        add(panelSuperiorContainer, BorderLayout.NORTH);
+    }
+
+    private void verificarPagosPendientes() {
+        if (panelAlertas == null)
+            return;
+        panelAlertas.removeAll();
+
+        if (chatActual == null || usuarioActual == null) {
+            panelAlertas.revalidate();
+            panelAlertas.repaint();
+            return;
+        }
+
+        User otroUsuario = chatActual.obtenerOtroUsuario(usuarioActual);
+        if (otroUsuario == null)
+            return;
+
+        java.util.List<model.Publicacion> pendientes = chatController.obtenerPagosPendientes(otroUsuario,
+                usuarioActual);
+
+        for (Publicacion p : pendientes) {
+            JPanel alerta = new JPanel(new BorderLayout(10, 5));
+            alerta.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(251, 192, 45)),
+                    BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+
+            if (p.getEstado() == util.EstadoPublicacion.FINALIZADA) {
+                // --- CASO: TRANSACCIÓN FINALIZADA (PARA AMBOS) ---
+                alerta.setBackground(new Color(200, 230, 201)); // Verde claro
+                alerta.setBorder(BorderFactory.createLineBorder(new Color(46, 204, 113)));
+
+                if (usuarioActual.haCalificadoPublicacion(p.getIdArticulo())) {
+                    JLabel lblDone = new JLabel(
+                            "<html><b>¡Transacción Completada!</b><br/>Ya has calificado esta transacción.</html>");
+                    lblDone.setForeground(new Color(27, 94, 32));
+                    alerta.add(lblDone, BorderLayout.CENTER);
+                } else {
+                    JLabel lblMsg = new JLabel("<html><b>¡Transacción Completada!</b><br/>'" + p.getTitulo()
+                            + "'<br/>Recuerda calificar tu experiencia.</html>");
+                    lblMsg.setForeground(new Color(27, 94, 32));
+
+                    JButton btnCalificar = new JButton("⭐ Calificar Usuario");
+                    btnCalificar.setBackground(new Color(255, 193, 7));
+                    btnCalificar.setForeground(Color.BLACK);
+                    btnCalificar.addActionListener(e -> {
+                        // Determinar a quién calificar (al otro)
+                        User u = chatActual.obtenerOtroUsuario(usuarioActual);
+                        if (u != null) {
+                            new view.PerfilUsuarioView(null, u,
+                                    new controller.UserController(pubController.getUserService()), true,
+                                    p.getIdArticulo(), usuarioActual).setVisible(true);
+                            // Refrescar al cerrar la ventana de calificación (hack simple)
+                            verificarPagosPendientes();
+                        }
+                    });
+
+                    alerta.add(lblMsg, BorderLayout.CENTER);
+                    alerta.add(btnCalificar, BorderLayout.EAST);
+                }
+            } else if (p.getIdVendedor().equals(usuarioActual.getId())) {
+                // --- CASO: VENDEDOR ESPERANDO PAGO/CONFIRMACIÓN ---
+                alerta.setBackground(new Color(255, 235, 59));
+                String tipo = (p.getTipoPublicacion() == util.TipoPublicacion.SUBASTA) ? "Subasta" : "Trueque";
+                JLabel lblMsg = new JLabel("<html><b>" + tipo + " Cerrada:</b> '" + p.getTitulo()
+                        + "'.<br/>Esperando confirmación/pago del otro usuario.</html>");
+                lblMsg.setForeground(new Color(60, 60, 0));
+                alerta.add(lblMsg, BorderLayout.CENTER);
+            } else {
+                // --- CASO: COMPRADOR/OFERTANTE QUE DEBE PAGAR/CONFIRMAR ---
+                alerta.setBackground(new Color(255, 235, 59));
+                if (p.getTipoPublicacion() == util.TipoPublicacion.SUBASTA) {
+                    JLabel lblMsg = new JLabel("<html><b>¡Ganaste la subasta!</b><br/>'" + p.getTitulo()
+                            + "'<br/>Debes realizar el pago.</html>");
+                    lblMsg.setForeground(new Color(60, 60, 0));
+
+                    JButton btnPagar = new JButton("Pagar Ahora");
+                    btnPagar.setBackground(new Color(46, 204, 113));
+                    btnPagar.setForeground(Color.WHITE);
+                    btnPagar.addActionListener(e -> {
+                        int confirm = JOptionPane.showConfirmDialog(this,
+                                "Esto simulará el pago para '" + p.getTitulo() + "'.\n¿Confirmar pago?", "Pago",
+                                JOptionPane.YES_NO_OPTION);
+                        if (confirm == JOptionPane.YES_OPTION) {
+                            pubController.finalizarSubastaConPago(p.getIdArticulo(), usuarioActual.getId());
+                            verificarPagosPendientes(); // Refrescar
+                        }
+                    });
+                    alerta.add(lblMsg, BorderLayout.CENTER);
+                    alerta.add(btnPagar, BorderLayout.EAST);
+                } else {
+                    JLabel lblMsg = new JLabel("<html><b>¡Tu oferta fue aceptada!</b><br/>Trueque: '" + p.getTitulo()
+                            + "'<br/>Confirma para finalizar.</html>");
+                    lblMsg.setForeground(new Color(60, 60, 0));
+
+                    JButton btnConcretar = new JButton("Concretar Trueque");
+                    btnConcretar.setBackground(new Color(52, 152, 219));
+                    btnConcretar.setForeground(Color.WHITE);
+                    btnConcretar.addActionListener(e -> {
+                        int confirm = JOptionPane.showConfirmDialog(this,
+                                "¿Deseas concretar el intercambio para '" + p.getTitulo() + "'?", "Confirmar Trueque",
+                                JOptionPane.YES_NO_OPTION);
+                        if (confirm == JOptionPane.YES_OPTION) {
+                            pubController.concretarIntercambio(p.getIdArticulo(), usuarioActual.getId());
+                            verificarPagosPendientes(); // Refrescar
+                        }
+                    });
+                    alerta.add(lblMsg, BorderLayout.CENTER);
+                    alerta.add(btnConcretar, BorderLayout.EAST);
+                }
+            }
+            panelAlertas.add(alerta);
+            panelAlertas.add(Box.createVerticalStrut(5));
+        }
+
+        panelAlertas.revalidate();
+        panelAlertas.repaint();
     }
 
     private void mostrarOfertasRelacionadas() {

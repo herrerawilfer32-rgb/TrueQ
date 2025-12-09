@@ -111,12 +111,36 @@ public class PublicacionCardPanel extends JPanel {
         lblDescripcion.setForeground(new Color(100, 100, 100));
         lblDescripcion.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Nombre del vendedor
-        String nombreVendedor = obtenerNombreVendedor();
-        JLabel lblVendedor = new JLabel("👤 " + nombreVendedor);
+        // Nombre del vendedor y Ubicación
+        User vendedor = null;
+        String nombreVendedor = "Desconocido";
+        String ubicacionVendedor = "Desconocida";
+
+        try {
+            vendedor = controller.obtenerVendedor(publicacion.getIdArticulo());
+            if (vendedor != null) {
+                nombreVendedor = vendedor.getNombre();
+                if (vendedor.getUbicacion() != null && !vendedor.getUbicacion().isBlank()) {
+                    ubicacionVendedor = vendedor.getUbicacion();
+                }
+            }
+        } catch (Exception e) {
+            nombreVendedor = "Usuario " + publicacion.getIdVendedor();
+        }
+
+        String textoVendedor = "👤 " + nombreVendedor;
+        if (vendedor != null && vendedor.getNumeroCalificaciones() > 0) {
+            textoVendedor += String.format(" (⭐ %.1f)", vendedor.getReputacion());
+        }
+        JLabel lblVendedor = new JLabel(textoVendedor);
         lblVendedor.setFont(new Font("SansSerif", Font.BOLD, 11));
         lblVendedor.setForeground(new Color(52, 73, 94));
         lblVendedor.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel lblUbicacion = new JLabel("📍 " + ubicacionVendedor);
+        lblUbicacion.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        lblUbicacion.setForeground(new Color(100, 100, 100));
+        lblUbicacion.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Estado
         JLabel lblEstado = new JLabel("• " + publicacion.getEstado().toString());
@@ -125,6 +149,7 @@ public class PublicacionCardPanel extends JPanel {
         lblEstado.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Agregar componentes al panel de info
+        // Agregar componentes al panel de info
         panelInfo.add(lblTipo);
         panelInfo.add(Box.createVerticalStrut(5));
         panelInfo.add(lblTitulo);
@@ -132,13 +157,18 @@ public class PublicacionCardPanel extends JPanel {
         panelInfo.add(lblPrecio);
         panelInfo.add(Box.createVerticalStrut(5));
         panelInfo.add(lblDescripcion);
-        panelInfo.add(Box.createVerticalStrut(3));
+        panelInfo.add(Box.createVerticalStrut(5));
         panelInfo.add(lblVendedor);
+        panelInfo.add(Box.createVerticalStrut(2)); // Espacio entre vendedor y ubicación
+        panelInfo.add(lblUbicacion);
         panelInfo.add(Box.createVerticalGlue());
+
+        add(panelInfo, BorderLayout.CENTER);
 
         // Panel inferior para estado y fecha de cierre
         JPanel panelInferior = new JPanel(new BorderLayout());
         panelInferior.setOpaque(false);
+        panelInferior.setBorder(new EmptyBorder(5, 0, 0, 0)); // Un poco de espacio arriba
         panelInferior.add(lblEstado, BorderLayout.WEST);
 
         // Si es subasta, agregar fecha de cierre a la derecha
@@ -153,9 +183,8 @@ public class PublicacionCardPanel extends JPanel {
             panelInferior.add(lblFechaCierre, BorderLayout.EAST);
         }
 
-        panelInfo.add(panelInferior);
-
-        add(panelInfo, BorderLayout.CENTER);
+        // Agregar panelInferior al SUR del borde principal para que siempre se vea
+        add(panelInferior, BorderLayout.SOUTH);
     }
 
     private void addHoverEffect() {
@@ -210,15 +239,4 @@ public class PublicacionCardPanel extends JPanel {
         return text.substring(0, maxLength) + "...";
     }
 
-    private String obtenerNombreVendedor() {
-        try {
-            User vendedor = controller.obtenerVendedor(publicacion.getIdArticulo());
-            if (vendedor != null) {
-                return vendedor.getNombre();
-            }
-        } catch (Exception e) {
-            // Si hay error, mostrar ID truncado
-        }
-        return "Usuario " + publicacion.getIdVendedor().substring(0, Math.min(8, publicacion.getIdVendedor().length()));
-    }
 }

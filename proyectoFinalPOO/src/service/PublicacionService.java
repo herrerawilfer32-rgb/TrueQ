@@ -173,6 +173,17 @@ public class PublicacionService {
     }
 
     /**
+     * Marca una publicación como FINALIZADA (transacción completada exitosamente).
+     */
+    public void finalizarPublicacion(String idPublicacion) {
+        Publicacion publicacion = publicacionRepository.buscarPorIdArticulo(idPublicacion);
+        if (publicacion != null) {
+            publicacion.setEstado(EstadoPublicacion.FINALIZADA);
+            publicacionRepository.guardar(publicacion);
+        }
+    }
+
+    /**
      * Actualiza una publicación si el usuario solicitante es el dueño.
      */
     public boolean actualizarPublicacion(Publicacion publicacion, String idUsuarioSolicitante) {
@@ -194,5 +205,77 @@ public class PublicacionService {
      */
     public User obtenerUsuarioPorId(String idUsuario) {
         return userService.buscarUsuarioPorId(idUsuario);
+    }
+
+    /**
+     * Busca publicaciones filtradas por la ciudad del vendedor.
+     */
+    /**
+     * Busca publicaciones con filtros avanzados: Ciudad, Tipo y Rango de Precio.
+     */
+    public List<Publicacion> listarPublicacionesConFiltros(String ciudadQuery, String tipo, Double minPrecio,
+            Double maxPrecio) {
+        List<Publicacion> todas = buscarPublicacionesActivas();
+        List<Publicacion> filtradas = new java.util.ArrayList<>();
+
+        String ciudadBusqueda = (ciudadQuery != null && !ciudadQuery.isBlank()) ? normalizarTexto(ciudadQuery) : null;
+
+        for (Publicacion p : todas) {
+            boolean coincide = true;
+
+            // 1. Filtro por Ciudad
+            if (ciudadBusqueda != null) {
+                User vendedor = userService.buscarUsuarioPorId(p.getIdVendedor());
+                if (vendedor == null || vendedor.getUbicacion() == null) {
+                    coincide = false;
+                } else {
+                    String ubicacionVendedor = normalizarTexto(vendedor.getUbicacion());
+                    if (!ubicacionVendedor.contains(ciudadBusqueda)) {
+                        coincide = false;
+                    }
+                }
+            }
+
+            // 2. Filtro por Tipo
+            if (coincide && tipo != null && !tipo.equals("TODOS")) {
+                if (!p.getTipoPublicacion().toString().equals(tipo)) {
+                    coincide = false;
+                }
+            }
+
+            // 3. Filtro por Precio (Solo aplica a Subastas)
+            if (coincide && (minPrecio != null || maxPrecio != null)) {
+                if (p instanceof model.PublicacionSubasta) {
+                    double precio = ((model.PublicacionSubasta) p).getPrecioMinimo();
+
+                    if (minPrecio != null && precio < minPrecio) {
+                        coincide = false;
+                    }
+                    if (maxPrecio != null && precio > maxPrecio) {
+                        coincide = false;
+                    }
+                }
+            }
+
+            if (coincide) {
+                filtradas.add(p);
+            }
+        }
+        return filtradas;
+    }
+
+    /**
+     * Normaliza un texto para búsqueda: minúsculas, trim y sin acentos.
+     */
+    private String normalizarTexto(String input) {
+        if (input == null)
+            return "";
+        String normalized = java.text.Normalizer.normalize(input, java.text.Normalizer.Form.NFD);
+        normalized = normalized.replaceAll("\\p{M}", ""); // Quita marcas diacríticas (tildes)
+        return normalized.toLowerCase().trim();
+    }
+
+    public UserService getUserService() {
+        return userService;
     }
 }

@@ -69,4 +69,18 @@ public class UserService {
         userRepository.guardar(nuevoUsuario);
         return true;
     }
+
+    /**
+     * Actualiza los datos de un usuario existente.
+     */
+    public void actualizarUsuario(User user) {
+        if (user == null || user.getId() == null) {
+            throw new IllegalArgumentException("Usuario no válido para actualizar.");
+        }
+        // Validar que exista
+        if (userRepository.buscarPorId(user.getId()) == null) {
+            throw new IllegalArgumentException("El usuario no existe.");
+        }
+        userRepository.guardar(user);
+    }
 }

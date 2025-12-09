@@ -9,10 +9,7 @@ import controller.ReporteController;
 import model.Publicacion;
 import model.User;
 import model.chat.Chat;
-import util.RolUsuario;
 
-import persistence.ChatRepository;
-import persistence.ChatFileRepository;
 import persistence.UserRepository;
 
 import javax.swing.*;
@@ -38,6 +35,13 @@ public class MainWindow extends JFrame {
     private java.util.List<PublicacionCardPanel> tarjetasActuales;
     private PublicacionCardPanel tarjetaSeleccionada;
 
+    // Componentes de Búsqueda
+    private JTextField txtBuscarCiudad;
+    private JComboBox<String> cmbTipo;
+    private JTextField txtMinPrecio;
+    private JTextField txtMaxPrecio;
+    private JButton btnBuscar;
+
     // Pestañas y paneles de chat
     private JTabbedPane pestañasCentro;
     private PanelListaChats panelListaChats;
@@ -54,7 +58,7 @@ public class MainWindow extends JFrame {
         this.reporteController = reporteController;
 
         setTitle("Mercado Local - Inicio");
-        setSize(900, 600);
+        setSize(1000, 700);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -74,10 +78,50 @@ public class MainWindow extends JFrame {
 
         lblBienvenida = new JLabel("Bienvenido, Invitado");
         lblBienvenida.setForeground(Color.WHITE);
-        lblBienvenida.setFont(new Font("SansSerif", Font.BOLD, 16));
+        header.add(lblBienvenida, BorderLayout.WEST);
 
         JPanel panelDerechoHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         panelDerechoHeader.setOpaque(false);
+
+        // --- BUSQUEDA ---
+        // 1. Filtro Tipo
+        cmbTipo = new JComboBox<>(new String[] { "TODOS", "SUBASTA", "TRUEQUE" });
+        cmbTipo.addActionListener(e -> {
+            String seleccionado = (String) cmbTipo.getSelectedItem();
+            boolean esTrueque = "TRUEQUE".equals(seleccionado);
+            txtMinPrecio.setEnabled(!esTrueque);
+            txtMaxPrecio.setEnabled(!esTrueque);
+            if (esTrueque) {
+                txtMinPrecio.setText("");
+                txtMaxPrecio.setText("");
+            }
+        });
+
+        // 2. Filtro Precio
+        txtMinPrecio = new JTextField(5);
+        txtMinPrecio.setToolTipText("Min $");
+        txtMaxPrecio = new JTextField(5);
+        txtMaxPrecio.setToolTipText("Max $");
+
+        // 3. Filtro Ciudad
+        txtBuscarCiudad = new JTextField(12);
+        txtBuscarCiudad.setToolTipText("Buscar por ciudad...");
+
+        btnBuscar = new JButton("🔍 Buscar");
+        btnBuscar.setBackground(new Color(46, 204, 113));
+        btnBuscar.setForeground(Color.WHITE);
+        btnBuscar.addActionListener(e -> cargarPublicaciones());
+
+        JButton btnLimpiar = new JButton("❌ Limpiar");
+        btnLimpiar.setBackground(new Color(189, 195, 199));
+        btnLimpiar.setForeground(Color.BLACK);
+        btnLimpiar.addActionListener(e -> {
+            txtBuscarCiudad.setText("");
+            cmbTipo.setSelectedIndex(0);
+            txtMinPrecio.setText("");
+            txtMaxPrecio.setText("");
+            cargarPublicaciones();
+        });
 
         btnNotificaciones = new JButton("🔔 0");
         btnNotificaciones.setVisible(false);
@@ -97,17 +141,26 @@ public class MainWindow extends JFrame {
         btnLoginLogout = new JButton("Iniciar Sesión");
         btnLoginLogout.addActionListener(e -> manejarSesion());
 
+        // Agregar componentes al panel derecho
+        panelDerechoHeader.add(new JLabel("Tipo:"));
+        panelDerechoHeader.add(cmbTipo);
+        panelDerechoHeader.add(new JLabel("Precio:"));
+        panelDerechoHeader.add(txtMinPrecio);
+        panelDerechoHeader.add(new JLabel("-"));
+        panelDerechoHeader.add(txtMaxPrecio);
+        panelDerechoHeader.add(new JLabel("Ciudad:"));
+        panelDerechoHeader.add(txtBuscarCiudad);
+        panelDerechoHeader.add(btnBuscar);
+        panelDerechoHeader.add(btnLimpiar);
+        panelDerechoHeader.add(new JLabel("  |  "));
         panelDerechoHeader.add(btnPanelAdmin);
         panelDerechoHeader.add(btnNotificaciones);
         panelDerechoHeader.add(btnLoginLogout);
 
-        header.add(lblBienvenida, BorderLayout.WEST);
-     // Panel derecho para Cerrar Sesión + Salir
         JPanel panelDerecha = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         panelDerecha.setOpaque(false);
 
-        // Botón Cerrar Sesión (el que ya tenías)
-        panelDerecha.add(btnLoginLogout);
+        panelDerecha.add(panelDerechoHeader);
 
         // Botón Salir del Programa
         JButton btnSalir = new JButton("Salir");
@@ -119,8 +172,7 @@ public class MainWindow extends JFrame {
                     this,
                     "¿Deseas salir del programa?",
                     "Confirmar salida",
-                    JOptionPane.YES_NO_OPTION
-            );
+                    JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
                 System.exit(0);
             }
@@ -162,7 +214,7 @@ public class MainWindow extends JFrame {
             pestañasCentro.setSelectedIndex(1); // Ir a la pestaña "Chats"
         });
 
-        panelChatDetalle = new PanelChatDetalle(chatController);
+        panelChatDetalle = new PanelChatDetalle(chatController, pubController);
 
         JSplitPane splitChats = new JSplitPane(
                 JSplitPane.HORIZONTAL_SPLIT,
@@ -202,13 +254,15 @@ public class MainWindow extends JFrame {
                 new MisOfertasView(pubController, usuarioLogueado).setVisible(true);
         });
 
-        btnRefrescar.addActionListener(e -> cargarPublicaciones());
+        btnRefrescar.addActionListener(e -> {
+            cargarPublicaciones();
+        });
 
         btnVerDetalle.addActionListener(e -> verDetalleSeleccionado());
         btnEliminar.addActionListener(e -> eliminarPublicacionSeleccionada());
         btnEditar.addActionListener(e -> editarPublicacionSeleccionada());
         btnSalirApp.addActionListener(e -> cerrarAplicacion());
-        
+
         footer.add(btnVender);
         footer.add(btnMisOfertas);
         footer.add(btnRefrescar);
@@ -216,33 +270,60 @@ public class MainWindow extends JFrame {
         footer.add(btnVerDetalle);
         footer.add(btnEditar);
         footer.add(btnEliminar);
-        footer.add(btnSalirApp);  
+        footer.add(btnSalirApp);
 
         add(footer, BorderLayout.SOUTH);
     }
 
     // --- MÉTODOS LÓGICOS ---
 
+    // Sobrecarga para mantener compatibilidad
     public void cargarPublicaciones() {
         panelContenedorCards.removeAll();
         tarjetasActuales.clear();
         tarjetaSeleccionada = null;
 
-        List<Publicacion> lista = pubController.obtenerPublicacionesActivas();
+        String ciudad = txtBuscarCiudad.getText();
+        String tipo = (String) cmbTipo.getSelectedItem();
+        Double min = null;
+        Double max = null;
+
+        try {
+            if (!txtMinPrecio.getText().isBlank())
+                min = Double.parseDouble(txtMinPrecio.getText());
+            if (!txtMaxPrecio.getText().isBlank())
+                max = Double.parseDouble(txtMaxPrecio.getText());
+        } catch (NumberFormatException e) {
+            // Ignorar error de parseo, simplemente no filtra por precio
+        }
+
+        List<Publicacion> lista = pubController.listarPublicacionesConFiltros(ciudad, tipo, min, max);
 
         if (lista != null) {
+            if (lista.isEmpty()) {
+                // Opcional: Mostrar mensaje si no hay resultados, pero puede ser molesto al
+                // inicio
+                // JOptionPane.showMessageDialog(this, "No se encontraron publicaciones con esos
+                // filtros.");
+            }
+
             for (Publicacion p : lista) {
-                PublicacionCardPanel card = new PublicacionCardPanel(p, pubController);
+                try {
+                    PublicacionCardPanel card = new PublicacionCardPanel(p, pubController);
 
-                card.addMouseListener(new java.awt.event.MouseAdapter() {
-                    @Override
-                    public void mouseClicked(java.awt.event.MouseEvent e) {
-                        seleccionarTarjeta(card);
-                    }
-                });
+                    card.addMouseListener(new java.awt.event.MouseAdapter() {
+                        @Override
+                        public void mouseClicked(java.awt.event.MouseEvent e) {
+                            seleccionarTarjeta(card);
+                        }
+                    });
 
-                tarjetasActuales.add(card);
-                panelContenedorCards.add(card);
+                    tarjetasActuales.add(card);
+                    panelContenedorCards.add(card);
+                } catch (Exception e) {
+                    System.err.println("Error al renderizar publicación " + p.getIdArticulo() + ": " + e.getMessage());
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -270,8 +351,6 @@ public class MainWindow extends JFrame {
         }
         Publicacion seleccionada = tarjetaSeleccionada.getPublicacion();
 
-        // 🔗 Ahora le pasamos también this (MainWindow) para poder abrir el chat desde
-        // el detalle, y el ReporteController
         new DetallePublicacionView(pubController, seleccionada, usuarioLogueado, this, reporteController)
                 .setVisible(true);
     }
@@ -478,6 +557,7 @@ public class MainWindow extends JFrame {
             btnNotificaciones.setVisible(false);
         }
     }
+
     /**
      * Cierra la aplicación completa pidiendo confirmación al usuario.
      */
@@ -486,12 +566,11 @@ public class MainWindow extends JFrame {
                 this,
                 "¿Deseas salir de la aplicación?",
                 "Confirmar salida",
-                JOptionPane.YES_NO_OPTION
-        );
+                JOptionPane.YES_NO_OPTION);
 
         if (opcion == JOptionPane.YES_OPTION) {
-            dispose();        // Cierra la ventana principal
-            System.exit(0);   // Termina el proceso Java
+            dispose(); // Cierra la ventana principal
+            System.exit(0); // Termina el proceso Java
         }
     }
 }
