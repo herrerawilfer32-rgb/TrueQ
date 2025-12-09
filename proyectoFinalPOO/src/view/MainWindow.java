@@ -51,6 +51,8 @@ public class MainWindow extends JFrame {
 
     public MainWindow(AuthController authController, PublicacionController pubController,
             ChatController chatController, AdminController adminController, ReporteController reporteController) {
+    	setBackground(new Color(255, 255, 255));
+    	setForeground(new Color(235, 203, 129));
         this.authController = authController;
         this.pubController = pubController;
         this.chatController = chatController;
@@ -61,7 +63,7 @@ public class MainWindow extends JFrame {
         setSize(1000, 700);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new BorderLayout());
+        getContentPane().setLayout(new BorderLayout());
 
         initUI();
         cargarPublicaciones(); // MOSTRAR PUBLICACIONES APENAS INICIA
@@ -73,7 +75,7 @@ public class MainWindow extends JFrame {
     private void initUI() {
         // --- HEADER ---
         JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(new Color(52, 73, 94));
+        header.setBackground(new Color(46, 0, 108));
         header.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
 
         lblBienvenida = new JLabel("Bienvenido, Invitado");
@@ -139,20 +141,31 @@ public class MainWindow extends JFrame {
         btnPanelAdmin.addActionListener(e -> abrirPanelAdmin());
 
         btnLoginLogout = new JButton("Iniciar Sesión");
+        btnLoginLogout.setBackground(new Color(243, 223, 84));
         btnLoginLogout.addActionListener(e -> manejarSesion());
 
         // Agregar componentes al panel derecho
-        panelDerechoHeader.add(new JLabel("Tipo:"));
+        JLabel label = new JLabel("Tipo:");
+        label.setForeground(new Color(235, 203, 129));
+        panelDerechoHeader.add(label);
         panelDerechoHeader.add(cmbTipo);
-        panelDerechoHeader.add(new JLabel("Precio:"));
+        JLabel label_1 = new JLabel("Precio:");
+        label_1.setForeground(new Color(235, 203, 129));
+        panelDerechoHeader.add(label_1);
         panelDerechoHeader.add(txtMinPrecio);
-        panelDerechoHeader.add(new JLabel("-"));
+        JLabel label_3 = new JLabel("-");
+        label_3.setForeground(new Color(235, 203, 129));
+        panelDerechoHeader.add(label_3);
         panelDerechoHeader.add(txtMaxPrecio);
-        panelDerechoHeader.add(new JLabel("Ciudad:"));
+        JLabel label_2 = new JLabel("Ciudad:");
+        label_2.setForeground(new Color(235, 203, 129));
+        panelDerechoHeader.add(label_2);
         panelDerechoHeader.add(txtBuscarCiudad);
         panelDerechoHeader.add(btnBuscar);
         panelDerechoHeader.add(btnLimpiar);
-        panelDerechoHeader.add(new JLabel("  |  "));
+        JLabel label_4 = new JLabel("  |  ");
+        label_4.setForeground(new Color(235, 203, 129));
+        panelDerechoHeader.add(label_4);
         panelDerechoHeader.add(btnPanelAdmin);
         panelDerechoHeader.add(btnNotificaciones);
         panelDerechoHeader.add(btnLoginLogout);
@@ -183,15 +196,18 @@ public class MainWindow extends JFrame {
         // Agregar panel al header
         header.add(panelDerecha, BorderLayout.EAST);
 
-        add(header, BorderLayout.NORTH);
+        getContentPane().add(header, BorderLayout.NORTH);
 
         // --- CENTRO: PESTAÑAS (Publicaciones + Chats) ---
         pestañasCentro = new JTabbedPane();
+        pestañasCentro.setForeground(new Color(0, 0, 0));
+        pestañasCentro.setBackground(new Color(106, 153, 149));
 
         // ==== TAB PUBLICACIONES ====
         tarjetasActuales = new java.util.ArrayList<>();
 
         panelContenedorCards = new JPanel();
+        panelContenedorCards.setForeground(new Color(192, 192, 192));
         panelContenedorCards.setLayout(new GridLayout(0, 3, 15, 15));
         panelContenedorCards.setBackground(Color.WHITE);
         panelContenedorCards.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
@@ -202,6 +218,8 @@ public class MainWindow extends JFrame {
         scrollCards.getVerticalScrollBar().setUnitIncrement(16);
 
         JPanel panelPublicaciones = new JPanel(new BorderLayout());
+        panelPublicaciones.setForeground(new Color(240, 201, 108));
+        panelPublicaciones.setBackground(new Color(106, 153, 149));
         panelPublicaciones.setBorder(BorderFactory.createTitledBorder(" Últimas Publicaciones "));
         panelPublicaciones.add(scrollCards, BorderLayout.CENTER);
 
@@ -224,20 +242,35 @@ public class MainWindow extends JFrame {
 
         pestañasCentro.addTab("Chats", splitChats);
 
-        add(pestañasCentro, BorderLayout.CENTER);
+        getContentPane().add(pestañasCentro, BorderLayout.CENTER);
 
         // --- FOOTER: BOTONES DE ACCIÓN ---
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        footer.setBackground(new Color(46, 0, 108));
 
         JButton btnVender = new JButton("💰 Publicar Artículo");
+        btnVender.setForeground(new Color(240, 201, 108));
+        btnVender.setBackground(new Color(100, 44, 169));
         JButton btnMisOfertas = new JButton("🤝 Ver Mis Ofertas");
+        btnMisOfertas.setForeground(new Color(240, 201, 108));
+        btnMisOfertas.setBackground(new Color(100, 44, 169));
         JButton btnRefrescar = new JButton("🔄 Actualizar Lista");
+        btnRefrescar.setForeground(new Color(240, 201, 108));
+        btnRefrescar.setBackground(new Color(100, 44, 169));
 
         // Nuevos botones CRUD
         JButton btnVerDetalle = new JButton("👁️ Ver Detalle");
+        btnVerDetalle.setForeground(new Color(240, 201, 108));
+        btnVerDetalle.setBackground(new Color(100, 44, 169));
         JButton btnEditar = new JButton("✏️ Editar");
+        btnEditar.setForeground(new Color(240, 201, 108));
+        btnEditar.setBackground(new Color(100, 44, 169));
         JButton btnEliminar = new JButton("🗑️ Eliminar");
+        btnEliminar.setForeground(new Color(255, 255, 255));
+        btnEliminar.setBackground(new Color(254, 120, 251));
         JButton btnSalirApp = new JButton("Salir");
+        btnSalirApp.setForeground(new Color(255, 255, 255));
+        btnSalirApp.setBackground(new Color(254, 120, 251));
 
         // LOGICA DEL "PORTERO" (GATEKEEPER)
         btnVender.addActionListener(e -> {
@@ -272,7 +305,7 @@ public class MainWindow extends JFrame {
         footer.add(btnEliminar);
         footer.add(btnSalirApp);
 
-        add(footer, BorderLayout.SOUTH);
+        getContentPane().add(footer, BorderLayout.SOUTH);
     }
 
     // --- MÉTODOS LÓGICOS ---

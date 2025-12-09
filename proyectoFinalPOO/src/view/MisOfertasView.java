@@ -28,17 +28,17 @@ public class MisOfertasView extends JFrame {
         setSize(800, 600);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setLayout(new BorderLayout());
+        getContentPane().setLayout(new BorderLayout());
 
         initComponents();
 
-        JButton btnCerrar = new JButton("Cerrar");
+        JButton btnCerrar = new JButton("Volver");
         btnCerrar.addActionListener(e -> dispose());
 
         JPanel panelInferior = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         panelInferior.add(btnCerrar);
 
-        add(panelInferior, BorderLayout.SOUTH);
+        getContentPane().add(panelInferior, BorderLayout.SOUTH);
 
         cargarMisPublicaciones();
     }
@@ -86,7 +86,7 @@ public class MisOfertasView extends JFrame {
         scrollOfertas.setBorder(BorderFactory.createTitledBorder("Ofertas Recibidas"));
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelIzq, scrollOfertas);
-        add(splitPane, BorderLayout.CENTER);
+        getContentPane().add(splitPane, BorderLayout.CENTER);
     }
 
     private void cargarMisPublicaciones() {

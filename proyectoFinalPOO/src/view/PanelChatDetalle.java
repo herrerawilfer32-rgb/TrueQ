@@ -46,6 +46,7 @@ public class PanelChatDetalle extends JPanel {
      *                       mensajes.
      */
     public PanelChatDetalle(ChatController chatController, controller.PublicacionController pubController) {
+    	setBackground(new Color(71, 116, 112));
         if (chatController == null) {
             throw new IllegalArgumentException("El controlador de chat no puede ser nulo.");
         }
@@ -115,6 +116,7 @@ public class PanelChatDetalle extends JPanel {
 
         // Área de conversación: solo lectura, con salto de línea automático
         areaConversacion = new JTextArea();
+        areaConversacion.setBackground(new Color(231, 250, 254));
         areaConversacion.setEditable(false);
         areaConversacion.setLineWrap(true);
         areaConversacion.setWrapStyleWord(true);
@@ -124,11 +126,15 @@ public class PanelChatDetalle extends JPanel {
 
         // Panel inferior: campo de texto + botón "Enviar"
         JPanel panelInferior = new JPanel(new BorderLayout(5, 5));
+        panelInferior.setBackground(new Color(71, 116, 112));
 
         campoNuevoMensaje = new JTextField();
+        campoNuevoMensaje.setBackground(new Color(206, 244, 253));
         botonEnviar = new JButton("Enviar");
+        botonEnviar.setBackground(new Color(106, 153, 149));
 
         JPanel panelBoton = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        panelBoton.setBackground(new Color(71, 116, 112));
         panelBoton.add(botonEnviar);
 
         panelInferior.add(campoNuevoMensaje, BorderLayout.CENTER);
@@ -140,11 +146,14 @@ public class PanelChatDetalle extends JPanel {
         JPanel panelSuperiorContainer = new JPanel(new BorderLayout());
 
         panelAlertas = new JPanel();
+        panelAlertas.setBackground(new Color(71, 116, 112));
         panelAlertas.setLayout(new BoxLayout(panelAlertas, BoxLayout.Y_AXIS));
         panelSuperiorContainer.add(panelAlertas, BorderLayout.CENTER);
 
         JPanel panelBotonesSup = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        panelBotonesSup.setBackground(new Color(71, 116, 112));
         JButton btnVerOfertas = new JButton("Ver Ofertas Relacionadas");
+        btnVerOfertas.setBackground(new Color(106, 153, 149));
         btnVerOfertas.addActionListener(e -> mostrarOfertasRelacionadas());
         panelBotonesSup.add(btnVerOfertas);
 
@@ -333,7 +342,7 @@ public class PanelChatDetalle extends JPanel {
             panelImg.add(new JLabel(new ImageIcon(newImg)));
         }
 
-        dialog.add(new JScrollPane(panelImg));
+        dialog.getContentPane().add(new JScrollPane(panelImg));
         dialog.setVisible(true);
     }
 

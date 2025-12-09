@@ -15,6 +15,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.util.List;
+import java.awt.Color;
 
 /**
  * Panel encargado de mostrar la lista de chats asociados a un usuario.
@@ -54,6 +55,8 @@ public class PanelListaChats extends JPanel {
      */
     public PanelListaChats(ChatController chatController,
             ChatSeleccionListener chatSeleccionListener) {
+    	setForeground(new Color(240, 201, 108));
+    	setBackground(new Color(71, 116, 112));
 
         if (chatController == null) {
             throw new IllegalArgumentException("El controlador de chat no puede ser nulo.");
@@ -92,11 +95,17 @@ public class PanelListaChats extends JPanel {
 
         // ---- Panel superior ----
         JPanel panelSuperior = new JPanel(new BorderLayout());
+        panelSuperior.setForeground(new Color(240, 201, 108));
+        panelSuperior.setBackground(new Color(71, 116, 112));
         etiquetaUsuarioActual = new JLabel();
         panelSuperior.add(etiquetaUsuarioActual, BorderLayout.WEST);
 
         botonActualizar = new JButton("Actualizar");
+        botonActualizar.setForeground(new Color(0, 0, 0));
+        botonActualizar.setBackground(new Color(106, 153, 149));
         JPanel panelBotonActualizar = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        panelBotonActualizar.setBackground(new Color(71, 116, 112));
+        panelBotonActualizar.setForeground(new Color(143, 35, 233));
         panelBotonActualizar.add(botonActualizar);
         panelSuperior.add(panelBotonActualizar, BorderLayout.EAST);
 
@@ -119,7 +128,10 @@ public class PanelListaChats extends JPanel {
 
         // ---- Panel inferior ----
         JPanel panelInferior = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        panelInferior.setBackground(new Color(71, 116, 112));
         botonAbrirChat = new JButton("Abrir chat");
+        botonAbrirChat.setForeground(new Color(0, 0, 0));
+        botonAbrirChat.setBackground(new Color(106, 153, 149));
         panelInferior.add(botonAbrirChat);
 
         add(panelInferior, BorderLayout.SOUTH);
