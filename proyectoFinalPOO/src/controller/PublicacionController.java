@@ -1,15 +1,16 @@
 package controller;
 
+import java.util.Date;
+import java.util.List;
+
+import model.Oferta;
 import model.Publicacion;
 import model.PublicacionSubasta;
 import model.PublicacionTrueque;
-import service.PublicacionService;
-import service.OfertaService;
 import model.User;
-import model.Oferta;
-
-import java.util.Date;
-import java.util.List;
+import model.chat.Chat;
+import service.OfertaService;
+import service.PublicacionService;
 
 public class PublicacionController {
 
@@ -126,9 +127,39 @@ public class PublicacionController {
         return ofertaService.obtenerOfertasPorPublicacion(idPublicacion);
     }
 
+    /**
+     * Aceptar oferta:
+     * - Usa la lógica existente de OfertaService.
+     * - Si la publicación es de TRUEQUE, se envía mensaje al intercambiador elegido:
+     *   "¡Felicidades, he elegido hacer un trato contigo! ¿deseas continuar con el trato?"
+     */
     public boolean aceptarOferta(String idOferta, String idVendedor) {
         try {
-            return ofertaService.aceptarOferta(idOferta, idVendedor);
+            boolean resultado = ofertaService.aceptarOferta(idOferta, idVendedor);
+
+            if (resultado && chatController != null) {
+                // Necesitamos los datos de la oferta para saber quién fue el elegido
+                // (asegúrate de tener este método en OfertaService)
+                Oferta ofertaAceptada = ofertaService.obtenerOfertaPorId(idOferta);
+                if (ofertaAceptada != null) {
+                    Publicacion publicacion = publicacionService
+                            .buscarPublicacionPorId(ofertaAceptada.getIdPublicacion());
+
+                    if (publicacion instanceof PublicacionTrueque) {
+                        User vendedor = publicacionService.obtenerUsuarioPorId(idVendedor);
+                        User ofertanteElegido = publicacionService
+                                .obtenerUsuarioPorId(ofertaAceptada.getIdOfertante());
+
+                        if (vendedor != null && ofertanteElegido != null) {
+                            Chat chat = chatController.obtenerOCrearChat(ofertanteElegido, vendedor);
+                            String mensaje = "¡Felicidades, he elegido hacer un trato contigo! ¿Deseas continuar con el trato?";
+                            chatController.enviarMensaje(chat, vendedor, mensaje);
+                        }
+                    }
+                }
+            }
+
+            return resultado;
         } catch (Exception e) {
             javax.swing.JOptionPane.showMessageDialog(null, e.getMessage());
             return false;
@@ -153,8 +184,59 @@ public class PublicacionController {
         }
     }
 
+    /**
+     * Cerrar subasta:
+     * - Determina ganador (mejor oferta) y le envía mensaje:
+     *   "¡Felicidades, eres el ganador de la subasta!, realiza tu pago aquí ..."
+     * - A cada participante que pujó pero no ganó:
+     *   "La subasta ha cerrado, en caso de no concretar un trato podrías ser el próximo adjudicatario."
+     * - Luego cierra la subasta en el servicio.
+     */
     public void cerrarSubasta(String idPublicacion, String idVendedor) {
         try {
+            // Validar que la publicación exista y sea una subasta
+            Publicacion publicacion = publicacionService.buscarPublicacionPorId(idPublicacion);
+            if (publicacion == null) {
+                throw new IllegalArgumentException("La publicación no existe.");
+            }
+            if (!(publicacion instanceof PublicacionSubasta)) {
+                throw new IllegalArgumentException("La publicación seleccionada no es una subasta.");
+            }
+            if (!publicacion.getIdVendedor().equals(idVendedor)) {
+                throw new IllegalArgumentException("Solo el dueño de la publicación puede cerrar la subasta.");
+            }
+
+            // Obtener la mejor oferta (ganador) si existe
+            Oferta mejorOferta = ofertaService.obtenerMejorOfertaSubasta(idPublicacion);
+
+            if (mejorOferta != null && chatController != null) {
+                User vendedor = publicacionService.obtenerUsuarioPorId(idVendedor);
+                User ganador = publicacionService.obtenerUsuarioPorId(mejorOferta.getIdOfertante());
+
+                // 1) Mensaje al ganador
+                if (vendedor != null && ganador != null) {
+                    Chat chatGanador = chatController.obtenerOCrearChat(ganador, vendedor);
+                    String mensajeGanador = "¡Felicidades, eres el ganador de la subasta! "
+                            + "Realiza tu pago aquí desde este chat (usa el botón 'Pagar' o coordina con el vendedor).";
+                    chatController.enviarMensaje(chatGanador, vendedor, mensajeGanador);
+                }
+
+                // 2) Mensajes a los que pujarón pero no ganaron
+                List<Oferta> ofertasNoGanadoras = ofertaService.obtenerOfertasNoGanadorasSubasta(idPublicacion);
+                if (ofertasNoGanadoras != null && !ofertasNoGanadoras.isEmpty() && vendedor != null) {
+                    for (Oferta oferta : ofertasNoGanadoras) {
+                        User pujador = publicacionService.obtenerUsuarioPorId(oferta.getIdOfertante());
+                        if (pujador != null) {
+                            Chat chatPerdedor = chatController.obtenerOCrearChat(pujador, vendedor);
+                            String mensajePerdedor = "La subasta ha cerrado, en caso de no concretar un trato "
+                                    + "podrías ser el próximo adjudicatario.";
+                            chatController.enviarMensaje(chatPerdedor, vendedor, mensajePerdedor);
+                        }
+                    }
+                }
+            }
+
+            // 3) Cerrar subasta normalmente
             publicacionService.cerrarSubasta(idPublicacion, idVendedor);
             javax.swing.JOptionPane.showMessageDialog(null, "Subasta cerrada correctamente.");
         } catch (Exception e) {
@@ -170,6 +252,7 @@ public class PublicacionController {
     private String generarIdOferta() {
         return "OFE-" + System.currentTimeMillis();
     }
+
     /**
      * Obtiene la puja actual de una publicación de subasta.
      *
@@ -182,8 +265,7 @@ public class PublicacionController {
         }
         return ofertaService.calcularPujaActualSubasta(
                 subasta.getIdArticulo(),
-                subasta.getPrecioMinimo()
-        );
+                subasta.getPrecioMinimo());
     }
 
     /**
@@ -199,4 +281,104 @@ public class PublicacionController {
         return ofertaService.calcularIncrementoRapidoSubasta(subasta.getPrecioMinimo());
     }
 
+    // ============================================================
+    //   NUEVO: CONCRETAR INTERCAMBIO Y FINALIZAR SUBASTA CON PAGO
+    // ============================================================
+
+    /**
+     * Concreta un intercambio (TRUEQUE):
+     * - Solo puede llamarse por el dueño o por el ofertante aceptado.
+     * - Elimina la publicación como se haría normalmente.
+     * - Notifica a los demás ofertantes:
+     *   "El intercambio ha sido concretado con otro usuario."
+     */
+    public void concretarIntercambio(String idPublicacion, String idUsuarioQueConfirma) {
+        try {
+            Publicacion publicacion = publicacionService.buscarPublicacionPorId(idPublicacion);
+            if (publicacion == null) {
+                throw new IllegalArgumentException("La publicación no existe.");
+            }
+            if (!(publicacion instanceof PublicacionTrueque)) {
+                throw new IllegalArgumentException("La publicación seleccionada no es un trueque.");
+            }
+
+            PublicacionTrueque trueque = (PublicacionTrueque) publicacion;
+
+            // Oferta aceptada (el intercambiador elegido)
+            Oferta ofertaAceptada = ofertaService.obtenerOfertaAceptadaTrueque(idPublicacion);
+            if (ofertaAceptada == null) {
+                throw new IllegalStateException("No hay una oferta aceptada para este trueque.");
+            }
+
+            // Validar permisos: dueño o usuario elegido
+            boolean esDueno = trueque.getIdVendedor().equals(idUsuarioQueConfirma);
+            boolean esOfertanteElegido = ofertaAceptada.getIdOfertante().equals(idUsuarioQueConfirma);
+            if (!esDueno && !esOfertanteElegido) {
+                throw new IllegalArgumentException(
+                        "Solo el dueño o el usuario seleccionado pueden concretar el intercambio.");
+            }
+
+            User vendedor = publicacionService.obtenerUsuarioPorId(trueque.getIdVendedor());
+
+            // Notificar a los demás ofertantes que el intercambio se concretó con otro usuario
+            List<Oferta> ofertasNoAceptadas = ofertaService.obtenerOfertasNoAceptadasTrueque(idPublicacion);
+            if (chatController != null && vendedor != null && ofertasNoAceptadas != null) {
+                for (Oferta oferta : ofertasNoAceptadas) {
+                    User otroOfertante = publicacionService.obtenerUsuarioPorId(oferta.getIdOfertante());
+                    if (otroOfertante != null) {
+                        Chat chat = chatController.obtenerOCrearChat(otroOfertante, vendedor);
+                        String mensaje = "El intercambio ha sido concretado con otro usuario.";
+                        chatController.enviarMensaje(chat, vendedor, mensaje);
+                    }
+                }
+            }
+
+            // Eliminar publicación "normalmente" usando el dueño como solicitante
+            publicacionService.eliminarPublicacion(idPublicacion, trueque.getIdVendedor());
+            javax.swing.JOptionPane.showMessageDialog(null, "Intercambio concretado y publicación eliminada.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            javax.swing.JOptionPane.showMessageDialog(null,
+                    "Error al concretar intercambio: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Finalizar subasta cuando el adjudicatario realiza el pago desde el chat:
+     * - Verifica que el usuario sea efectivamente el ganador.
+     * - Muestra mensaje de felicitación.
+     * - Elimina la publicación como si se eliminara normalmente.
+     */
+    public void finalizarSubastaConPago(String idPublicacion, String idComprador) {
+        try {
+            Publicacion publicacion = publicacionService.buscarPublicacionPorId(idPublicacion);
+            if (publicacion == null) {
+                throw new IllegalArgumentException("La publicación no existe.");
+            }
+            if (!(publicacion instanceof PublicacionSubasta)) {
+                throw new IllegalArgumentException("La publicación seleccionada no es una subasta.");
+            }
+
+            // Validar que el comprador sea el ganador (mejor oferta)
+            Oferta mejorOferta = ofertaService.obtenerMejorOfertaSubasta(idPublicacion);
+            if (mejorOferta == null) {
+                throw new IllegalStateException("No hay una oferta ganadora para esta subasta.");
+            }
+            if (!mejorOferta.getIdOfertante().equals(idComprador)) {
+                throw new IllegalArgumentException("Solo el adjudicatario puede realizar el pago.");
+            }
+
+            // Mensaje al adjudicatario
+            javax.swing.JOptionPane.showMessageDialog(null, "¡Felicidades eres el adjudicatario!");
+
+            // Eliminar la publicación como se haría normalmente (usando al dueño como solicitante)
+            String idVendedor = publicacion.getIdVendedor();
+            publicacionService.eliminarPublicacion(idPublicacion, idVendedor);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            javax.swing.JOptionPane.showMessageDialog(null,
+                    "Error al finalizar la subasta: " + e.getMessage());
+        }
+    }
 }

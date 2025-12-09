@@ -2,6 +2,7 @@ package service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.ArrayList;
 
 import persistence.OfertaRepository;
 import model.Oferta;
@@ -215,6 +216,7 @@ public class OfertaService {
         ofertaRepository.eliminar(idOferta);
         return true;
     }
+
     /**
      * Calcula la puja actual para una subasta:
      * parte del precio mínimo y si hay ofertas, usa la mayor oferta.
@@ -249,5 +251,131 @@ public class OfertaService {
         }
         return precioMinimo * 0.10;
     }
+
+    // ============================================================
+    //   NUEVOS MÉTODOS DE APOYO PARA SUBASTAS E INTERCAMBIOS
+    //   (SIN USAR ChatService, SOLO LÓGICA DE OFERTAS)
+    // ============================================================
+
+    /**
+     * Obtiene la mejor oferta (ganador potencial) de una subasta específica.
+     * Si no hay ofertas, retorna null.
+     *
+     * Útil para:
+     * - Mostrar quién es el ganador de la subasta.
+     * - Desde el controlador, enviar el mensaje:
+     *   "¡Felicidades, eres el ganador de la subasta! ..."
+     */
+    public Oferta obtenerMejorOfertaSubasta(String idPublicacion) {
+        if (idPublicacion == null || idPublicacion.isBlank()) {
+            throw new IllegalArgumentException("El id de la publicación no puede ser nulo ni vacío.");
+        }
+
+        List<Oferta> ofertas = ofertaRepository.buscarPorPublicacion(idPublicacion);
+        if (ofertas == null || ofertas.isEmpty()) {
+            return null;
+        }
+
+        Oferta mejor = null;
+        for (Oferta oferta : ofertas) {
+            if (mejor == null || oferta.getMontoOferta() > mejor.getMontoOferta()) {
+                mejor = oferta;
+            }
+        }
+        return mejor;
+    }
+
+    /**
+     * Obtiene la lista de ofertas NO ganadoras de una subasta.
+     * Es decir, todas las ofertas menos la de mayor monto.
+     *
+     * Desde el controlador se puede usar para enviar mensajes como:
+     * "La subasta ha cerrado. En caso de no concretar un trato podrías ser el próximo adjudicatario."
+     */
+    public List<Oferta> obtenerOfertasNoGanadorasSubasta(String idPublicacion) {
+        if (idPublicacion == null || idPublicacion.isBlank()) {
+            throw new IllegalArgumentException("El id de la publicación no puede ser nulo ni vacío.");
+        }
+
+        List<Oferta> ofertas = ofertaRepository.buscarPorPublicacion(idPublicacion);
+        List<Oferta> resultado = new ArrayList<>();
+
+        if (ofertas == null || ofertas.isEmpty()) {
+            return resultado;
+        }
+
+        Oferta mejor = obtenerMejorOfertaSubasta(idPublicacion);
+        if (mejor == null) {
+            // No hay ganador definido, todas se consideran no ganadoras
+            resultado.addAll(ofertas);
+            return resultado;
+        }
+
+        for (Oferta oferta : ofertas) {
+            if (!oferta.getIdOferta().equals(mejor.getIdOferta())) {
+                resultado.add(oferta);
+            }
+        }
+        return resultado;
+    }
+
+    /**
+     * Obtiene la oferta marcada como ACEPTADA para una publicación de TRUEQUE.
+     * Si ninguna oferta está aceptada, retorna null.
+     *
+     * Se puede usar cuando el dueño o el ofertante confirman el trato, para
+     * saber cuál es el "intercambiador elegido".
+     */
+    public Oferta obtenerOfertaAceptadaTrueque(String idPublicacion) {
+        if (idPublicacion == null || idPublicacion.isBlank()) {
+            throw new IllegalArgumentException("El id de la publicación no puede ser nulo ni vacío.");
+        }
+
+        List<Oferta> ofertas = ofertaRepository.buscarPorPublicacion(idPublicacion);
+        if (ofertas == null || ofertas.isEmpty()) {
+            return null;
+        }
+
+        for (Oferta oferta : ofertas) {
+            if (oferta.getEstadoOferta() == EstadoOferta.ACEPTADA) {
+                return oferta;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Obtiene las ofertas de TRUEQUE diferentes a la oferta aceptada.
+     * Útil para notificar a los demás participantes cuando el intercambio
+     * se concreta con otra persona:
+     * "El intercambio ha sido concretado con otro usuario."
+     */
+    public List<Oferta> obtenerOfertasNoAceptadasTrueque(String idPublicacion) {
+        if (idPublicacion == null || idPublicacion.isBlank()) {
+            throw new IllegalArgumentException("El id de la publicación no puede ser nulo ni vacío.");
+        }
+
+        List<Oferta> ofertas = ofertaRepository.buscarPorPublicacion(idPublicacion);
+        List<Oferta> resultado = new ArrayList<>();
+
+        if (ofertas == null || ofertas.isEmpty()) {
+            return resultado;
+        }
+
+        for (Oferta oferta : ofertas) {
+            if (oferta.getEstadoOferta() != EstadoOferta.ACEPTADA) {
+                resultado.add(oferta);
+            }
+        }
+        return resultado;
+    }
+    
+    public Oferta obtenerOfertaPorId(String idOferta) {
+        if (idOferta == null || idOferta.isBlank()) {
+            throw new IllegalArgumentException("El id de la oferta no puede ser nulo ni vacío.");
+        }
+        return ofertaRepository.buscarPorIdOferta(idOferta);
+    }
 }
+
 
