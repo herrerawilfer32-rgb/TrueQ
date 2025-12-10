@@ -1,9 +1,9 @@
-/*
+/**
  * Clase: PanelGestionUsuarios
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Vista de la interfaz.
- */
-
+ *  Vista de la interfaz.
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.3
+ */
 package view;
 
 import controller.AdminController;
@@ -15,6 +15,13 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
+/**
+ * PanelGestionUsuarios representa la interfaz de administración encargada de gestionar los usuarios del sistema. 
+ * Permite:
+ * - Listar todos los usuarios registrados.
+ * - Eliminar usuarios.
+ * - Asignar o remover privilegios de administrador.
+ */
 public class PanelGestionUsuarios extends JPanel {
 
     private final AdminController adminController;
