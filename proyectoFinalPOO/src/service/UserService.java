@@ -1,8 +1,9 @@
-/*
+/**
  * Clase: UserService
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Servicio que gestiona la lÃ³gica de usuarios.
- */
+ * Servicio que gestiona la lógica de usuarios.
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.2
+ */
 
 package service;
 
@@ -13,11 +14,24 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+     /**
+     * Crea una nueva instancia del servicio de usuarios.
+     *
+     * @param userRepository repositorio utilizado para almacenar y consultar usuarios
+     */
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
     // Método login (Búsqueda por Username)
+    
+    /**
+     * Inicia sesión en el sistema buscando un usuario por su nombre de usuario y verificando su contraseña.
+     *
+     * @param username nombre de usuario ingresado
+     * @param password contraseña ingresada
+     * @return el usuario autenticado, o {@code null} si las credenciales no coinciden
+     */
     public User iniciarSesion(String username, String password) {
 
         User user = userRepository.buscarPorNombreUsuario(username);
