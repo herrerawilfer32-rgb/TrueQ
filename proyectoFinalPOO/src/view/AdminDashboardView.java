@@ -1,8 +1,9 @@
-/*
- * Clase: AdminDashboardView
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Vista de la interfaz.
- */
+/**
+ * Clase: ConfiguracionGlobal
+ * Vista de la interfaz.
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.2
+ */
 
 package view;
 
@@ -54,7 +55,7 @@ public class AdminDashboardView extends JFrame {
                     new persistence.PublicacionRepository(),
                     new persistence.OfertaRepository(),
                     new persistence.UserRepository());
-            tabbedPane.addTab("📊 Analíticas",
+            tabbedPane.addTab(" Analíticas",
                     new PanelAnaliticas(adminController, analyticsService, adminUser.getId()));
         } catch (Exception e) {
             System.err.println("Error creando panel de analíticas: " + e.getMessage());
@@ -66,17 +67,17 @@ public class AdminDashboardView extends JFrame {
                     new persistence.UserRepository(),
                     new persistence.PublicacionRepository(),
                     new persistence.OfertaRepository());
-            tabbedPane.addTab("📝 Publicaciones",
+            tabbedPane.addTab(" Publicaciones",
                     new PanelGestionPublicaciones(adminController, adminService, adminUser.getId()));
         } catch (Exception e) {
             System.err.println("Error creando panel de publicaciones: " + e.getMessage());
         }
 
         // Panel Usuarios
-        tabbedPane.addTab("👥 Usuarios", new PanelGestionUsuarios(adminController, adminUser));
+        tabbedPane.addTab(" Usuarios", new PanelGestionUsuarios(adminController, adminUser));
 
         // Panel Reportes
-        tabbedPane.addTab("🚨 Reportes", new PanelGestionReportes(reporteController, adminUser));
+        tabbedPane.addTab(" Reportes", new PanelGestionReportes(reporteController, adminUser));
 
         // Panel Estadísticas
         JPanel panelStats = new JPanel(new GridLayout(3, 1, 10, 10));
@@ -97,7 +98,7 @@ public class AdminDashboardView extends JFrame {
         panelStats.add(lblPublicaciones);
         panelStats.add(lblOfertas);
 
-        tabbedPane.addTab("📈 Estadísticas", panelStats);
+        tabbedPane.addTab(" Estadísticas", panelStats);
 
         add(tabbedPane, BorderLayout.CENTER);
 
