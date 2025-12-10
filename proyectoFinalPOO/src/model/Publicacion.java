@@ -1,7 +1,8 @@
-/*
- * Clase: Publicacion
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Modelo base de una publicaciÃ³n.
+/**
+ * Clase: Oferta
+ * Modelo base de una publicación.
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.1
  */
 
 package model;
@@ -103,6 +104,16 @@ public abstract class Publicacion implements Serializable {
 
 	// Método constructor
 
+	/**
+     * Constructor base para toda publicación.
+     *
+     * @param idArticulo       Identificador único asignado al artículo/publicación.
+     * @param titulo           Título de la publicación mostrado al usuario.
+     * @param descripcion      Descripción detallada del artículo o servicio.
+     * @param idVendedor       ID del usuario que creó la publicación.
+     * @param fotosPaths       Lista de rutas hacia las imágenes asociadas.
+     * @param tipoPublicacion  Tipo específico de publicación (venta, trueque, subasta, etc.).
+     */
 	public Publicacion(String idArticulo, String titulo, String descripcion, String idVendedor, List<String> fotosPaths,
 			TipoPublicacion tipoPublicacion) {
 		this.idArticulo = idArticulo;
