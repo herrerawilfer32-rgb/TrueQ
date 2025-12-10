@@ -1,8 +1,9 @@
-/*
+/**
  * Clase: ReporteRepository
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Repositorio de persistencia.
- */
+ *Repositorio de persistencia.
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.1
+ */
 
 package persistence;
 
