@@ -1,14 +1,12 @@
-/*
+/**
  * Clase: TipoReporte
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Clase utilidad.
- */
+ * Enumeración que define los tipos de reportes que pueden hacer los usuarios.
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.2
+ */
 
 package util;
 
-/**
- * Enumeración que define los tipos de reportes que pueden hacer los usuarios.
- */
 public enum TipoReporte {
     /**
      * Reporte sobre una publicación
