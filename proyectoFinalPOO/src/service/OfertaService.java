@@ -1,8 +1,9 @@
-/*
+/**
  * Clase: OfertaService
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Servicio que gestiona ofertas y pujas.
- */
+ * Servicio que gestiona ofertas y pujas.
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.2
+ */
 
 package service;
 
