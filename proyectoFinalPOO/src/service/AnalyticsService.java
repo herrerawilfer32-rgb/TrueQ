@@ -1,9 +1,9 @@
-/*
+/**
  * Clase: AnalyticsService
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Servicio de lÃ³gica de negocio.
- */
-
+ * Servicio de lógica de negocio.
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.0
+ */
 package service;
 
 import model.*;
