@@ -1,8 +1,10 @@
-/*
- * Clase: MainWindow
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Ventana principal de la aplicaciÃ³n.
- */
+/**
+ * Clase: ConfiguracionGlobal
+ * Ventana principal de la aplicación.
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.5
+ */
+
 
 package view;
 
@@ -23,6 +25,19 @@ import java.awt.*;
 import java.util.List;
 import javax.swing.Timer;
 
+/**
+ * Ventana principal de la aplicación Mercado Local (TrueQ).
+ * 
+ * Desde aquí se controla:
+ *  - Navegación principal.
+ *  - Vista de publicaciones.
+ *  - Login/Logout.
+ *  - Visualización de chats.
+ *  - Acceso administrativo.
+ *  - Sistema de notificaciones.
+ *
+ * Esta ventana inicia en modo invitado hasta que un usuario inicie sesión.
+ */
 public class MainWindow extends JFrame {
 
     private User usuarioLogueado = null; // INICIO: MODO INVITADO
@@ -55,7 +70,16 @@ public class MainWindow extends JFrame {
     private PanelChatDetalle panelChatDetalle;
 
     private JButton btnNotificaciones;
-
+    
+    /**
+     * Constructor de la ventana principal.
+     *
+     * @param authController controlador de autenticación
+     * @param pubController controlador de publicaciones
+     * @param chatController controlador de chat/mensajes
+     * @param adminController controlador para administradores
+     * @param reporteController controlador de reportes
+     */
     public MainWindow(AuthController authController, PublicacionController pubController,
             ChatController chatController, AdminController adminController, ReporteController reporteController) {
         setBackground(new Color(255, 255, 255));
