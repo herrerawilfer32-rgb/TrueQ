@@ -1,9 +1,9 @@
-/*
+/**
  * Clase: CondicionArticulo
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Clase utilidad.
- */
-
+ * Clase utilidad.
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.0
+ */
 package util;
 
 /**
