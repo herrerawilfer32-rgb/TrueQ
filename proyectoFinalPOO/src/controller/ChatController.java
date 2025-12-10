@@ -1,7 +1,9 @@
-/*
+/**
  * Clase: ChatController
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Controlador del sistema de mensajerÃ­a.
+ * Controlador responsable de gestionar la lógica de negocio
+ * relacionada con el sistema de chat y mensajería entre usuarios.
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.0
  */
 
 package controller;
@@ -18,17 +20,16 @@ import util.EstadoOferta;
 import util.EstadoPublicacion;
 import persistence.ChatRepository;
 
-/**
- * Controlador responsable de gestionar la lógica de negocio
- * relacionada con el sistema de chat y mensajería entre usuarios.
- */
 public class ChatController {
 
     // Dependencia al repositorio de persistencia
     private final ChatRepository chatRepository;
     private final persistence.OfertaRepository ofertaRepository;
     private final persistence.PublicacionRepository publicacionRepository;
-
+    
+    /**
+     * Constructor: inicializa el controlador asegurando que ningún repositorio sea nulo.
+     */
     public ChatController(ChatRepository chatRepository,
             persistence.OfertaRepository ofertaRepository,
             persistence.PublicacionRepository publicacionRepository) {
@@ -40,6 +41,9 @@ public class ChatController {
         this.publicacionRepository = publicacionRepository;
     }
 
+     /**
+     * Obtiene un chat existente entre dos usuarios o crea uno nuevo si aún no existe.
+     */
     public Chat obtenerOCrearChat(User usuarioA, User usuarioB) {
         validarUsuarios(usuarioA, usuarioB);
 
@@ -203,17 +207,13 @@ public class ChatController {
         return pendientes;
     }
 
+    /**
+     * Busca las publicaciones entre vendedor y comprador donde exista una oferta
+     * aceptada pendiente de pago.
+     */
     private List<model.Publicacion> buscarPagosEntre(User vendedor, User comprador) {
         List<model.Publicacion> resultado = new ArrayList<>();
-        // 1. Obtener publicaciones del vendedor que estén CERRADA
-        // Como no tenemos un método "buscarCerradasPorVendedor", iteramos las del
-        // vendedor y filtramos.
-        // O mejor, iteramos todas las activas no, porque están cerradas.
-        // El repositorio de publicaciones suele tener método para buscar por vendedor.
-        // Ojo: buscarPublicacionesPorVendedor devuelve TODAS? (Activas/Cerradas).
-        // Verificaremos PublicacionRepository. De momento asumimos que sí o que podemos
-        // filtrar.
-
+    
         List<model.Publicacion> pubsVendedor = publicacionRepository.buscarPublicacionesPorVendedor(vendedor.getId());
         if (pubsVendedor == null)
             return resultado;
@@ -253,3 +253,4 @@ public class ChatController {
     }
 
 }
+
