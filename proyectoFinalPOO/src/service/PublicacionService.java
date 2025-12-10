@@ -1,8 +1,9 @@
-/*
+/**
  * Clase: PublicacionService
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Servicio de lÃ³gica de publicaciones.
- */
+ * Servicio de lógica de publicaciones.
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.0
+ */
 
 package service;
 
