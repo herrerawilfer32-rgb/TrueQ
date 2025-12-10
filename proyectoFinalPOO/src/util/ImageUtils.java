@@ -1,8 +1,9 @@
-/*
+/**
  * Clase: ImageUtils
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Clase utilidad.
- */
+ * clase de utilidad
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.2
+ */
 
 package util;
 
