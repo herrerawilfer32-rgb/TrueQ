@@ -1,8 +1,10 @@
-/*
+/**
  * Clase: AuthView
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Vista de la interfaz.
- */
+ * Vista encargada del proceso de autenticación (login y registro)
+ * dentro del sistema de Trueque y Subasta.
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.3
+ */
 
 package view;
 
@@ -17,7 +19,11 @@ public class AuthView extends JFrame { // JFrame para ser una ventana independie
     private JButton loginButton;
     private JButton registerButton;
     private JLabel messageLabel; // Para mostrar mensajes de éxito/error
-
+    
+    /**
+     * Constructor principal de la vista de autenticación.
+     * Configura la ventana, los componentes y su distribución.
+     */
     public AuthView() {
         setTitle("Sistema de Trueque y Subasta - Autenticación");
         setSize(400, 300);
@@ -54,15 +60,33 @@ public class AuthView extends JFrame { // JFrame para ser una ventana independie
     }
 
     // --- Métodos para que el Controller obtenga la entrada ---
+    
+    /**
+     * Obtiene el nombre de usuario ingresado.
+     *
+     * @return texto del campo username
+     */
     public String getUsername() {
         return usernameField.getText();
     }
 
+    /**
+     * Obtiene la contraseña ingresada por el usuario.
+     *
+     * @return contraseña como String
+     */
     public String getPassword() {
         return new String(passwordField.getPassword());
     }
 
     // --- Métodos para que el Controller muestre mensajes ---
+    
+     /**
+     * Muestra un mensaje en la parte superior de la vista.
+     *
+     * @param message texto del mensaje
+     * @param isError si es true, el mensaje es rojo; si es false, es azul.
+     */
     public void displayMessage(String message, boolean isError) {
         messageLabel.setText(message);
         messageLabel.setForeground(isError ? Color.RED : Color.BLUE);
