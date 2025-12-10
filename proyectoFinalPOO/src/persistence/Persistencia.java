@@ -1,3 +1,9 @@
+/*
+ * Clase: Persistencia
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Clase utilidad para serializaciÃ³n de objetos.
+ */
+
 package persistence;
 
 import java.io.*;

@@ -1,3 +1,9 @@
+/*
+ * Clase: UserService
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Servicio que gestiona la lÃ³gica de usuarios.
+ */
+
 package service;
 
 import persistence.UserRepository;

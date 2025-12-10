@@ -1,8 +1,9 @@
 /*
- * Nombre de la clase: PublicacionSubasta
- * Autor: Angel 
- * Descripción:representa una publicación de tipo subasta, añadiendo atributos como el precio mínimo y la fecha de cierre.
- */
+ * Clase: PublicacionSubasta
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Modelo de publicaciÃ³n tipo subasta.
+ */
+
 package model;
 
 import java.util.Date;

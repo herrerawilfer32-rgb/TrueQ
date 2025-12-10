@@ -1,3 +1,9 @@
+/*
+ * Clase: LoginWindow
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Ventana de inicio de sesiÃ³n.
+ */
+
 package view;
 
 import controller.AuthController;

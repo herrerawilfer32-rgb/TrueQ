@@ -1,3 +1,9 @@
+/*
+ * Clase: PanelGestionUsuarios
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Vista de la interfaz.
+ */
+
 package view;
 
 import controller.AdminController;

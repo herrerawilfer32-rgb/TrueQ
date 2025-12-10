@@ -1,3 +1,9 @@
+/*
+ * Clase: MisOfertasView
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Vista de la interfaz.
+ */
+
 package view;
 
 import controller.PublicacionController;
@@ -21,7 +27,7 @@ public class MisOfertasView extends JFrame {
     private JPanel panelOfertas;
 
     public MisOfertasView(PublicacionController controller, User usuarioActual) {
-    	setBackground(new Color(106, 153, 149));
+        setBackground(new Color(106, 153, 149));
         this.controller = controller;
         this.usuarioActual = usuarioActual;
 
@@ -160,14 +166,7 @@ public class MisOfertasView extends JFrame {
                 lblInfo.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
                 card.add(lblInfo, BorderLayout.CENTER);
 
-                // Debug info
-                System.out.println("DEBUG: Publicacion Tipo: " + seleccionada.getTipoPublicacion());
-                System.out.println("DEBUG: Oferta Estado: " + oferta.getEstadoOferta());
-                System.out.println(
-                        "DEBUG: Is Trueque? " + (seleccionada.getTipoPublicacion() == TipoPublicacion.TRUEQUE));
-                System.out.println("DEBUG: Is Pendiente? " + (oferta.getEstadoOferta() == util.EstadoOferta.PENDIENTE));
-
-                // Botón Aceptar y Rechazar (Solo para Trueques PENDIENTES)
+                // Botones para gestionar ofertas
                 JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
                 if (seleccionada.getTipoPublicacion() == TipoPublicacion.TRUEQUE
                         && oferta.getEstadoOferta() == util.EstadoOferta.PENDIENTE) {

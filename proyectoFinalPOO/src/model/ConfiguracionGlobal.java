@@ -1,8 +1,9 @@
 /*
- * Nombre de la clase: ConfiguracionGlobal 
- * Autor: Angel y Wilfer
- * Descripción: Representa la configuración general del sistema que puede ser modificada por administradores.
- */
+ * Clase: ConfiguracionGlobal
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Modelo de datos.
+ */
+
 package model;
 
 /**

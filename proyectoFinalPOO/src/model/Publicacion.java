@@ -1,8 +1,8 @@
 /*
- * Nombre de la clase: Publicacion
- * Autor: Angel y Wilfer
- * Descripción: Define la estructura base para cualquier tipo de publicación dentro del sistema, almacenando información.
- */
+ * Clase: Publicacion
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Modelo base de una publicaciÃ³n.
+ */
 
 package model;
 

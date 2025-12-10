@@ -1,9 +1,8 @@
 /*
- * Nombre de la clase:
- * Autor: Angel 
- * Descripción: Modela una oferta basada en intercambio, incorporando un listado de objetos deseados.
- */
-
+ * Clase: PublicacionTrueque
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Modelo de publicaciÃ³n tipo trueque.
+ */
 
 package model;
 

@@ -1,3 +1,9 @@
+/*
+ * Clase: EstadoOferta
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Clase utilidad.
+ */
+
 package util;
 
 public enum EstadoOferta {

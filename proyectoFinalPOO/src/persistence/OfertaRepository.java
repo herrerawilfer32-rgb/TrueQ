@@ -1,3 +1,9 @@
+/*
+ * Clase: OfertaRepository
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Repositorio de persistencia.
+ */
+
 package persistence;
 
 import model.Oferta;

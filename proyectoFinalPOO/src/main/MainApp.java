@@ -1,9 +1,9 @@
 /*
- * Nombre de la clase: MainApp
- * Autor: Angel 
- * Descripción: Inicializa toda la estructura del sistema, crea los repositorios que manejan los datos, 
- * configura los servicios con la lógica de negocio y lanza la ventana principal.
- */
+ * Clase: MainApp
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * Descripción: Punto de entrada de la aplicación. Inicializa los repositorios,
+ * servicios y controladores, luego lanza la ventana principal del sistema.
+ */
 
 package main;
 

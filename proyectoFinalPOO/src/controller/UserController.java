@@ -1,3 +1,9 @@
+/*
+ * Clase: UserController
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Controlador del sistema.
+ */
+
 package controller;
 
 import model.User;

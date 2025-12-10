@@ -1,3 +1,9 @@
+/*
+ * Clase: OfertaService
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Servicio que gestiona ofertas y pujas.
+ */
+
 package service;
 
 import java.util.Date;

@@ -1,3 +1,9 @@
+/*
+ * Clase: ChatController
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Controlador del sistema de mensajerÃ­a.
+ */
+
 package controller;
 
 import java.time.LocalDateTime;

@@ -1,3 +1,9 @@
+/*
+ * Clase: ImageUtils
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Clase utilidad.
+ */
+
 package util;
 
 import javax.swing.*;

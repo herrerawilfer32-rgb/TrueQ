@@ -1,9 +1,8 @@
 /*
- * Nombre de la clase: Oferta
- * Autor: Angel 
- * Descripción: Se crea una oferta realizada sobre una publicación, con información como identificador de la oferta, el usuario ofertante, la fecha 
- * ,monto ofrecido, la descripción del trueque, las imágenes adjuntas y el estado actual de la oferta
- */
+ * Clase: Oferta
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Modelo que representa una oferta.
+ */
 
 package model;
 

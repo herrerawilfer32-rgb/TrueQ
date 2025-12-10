@@ -1,3 +1,9 @@
+/*
+ * Clase: ReporteController
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Controlador de reportes y denuncias.
+ */
+
 package controller;
 
 import model.Reporte;

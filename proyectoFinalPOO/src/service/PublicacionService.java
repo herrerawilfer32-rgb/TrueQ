@@ -1,3 +1,9 @@
+/*
+ * Clase: PublicacionService
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Servicio de lÃ³gica de publicaciones.
+ */
+
 package service;
 
 import java.util.List;

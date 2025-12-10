@@ -1,3 +1,9 @@
+/*
+ * Clase: User
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Modelo que representa un usuario del sistema.
+ */
+
 package model;
 
 import java.io.Serializable;

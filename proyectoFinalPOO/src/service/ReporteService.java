@@ -1,3 +1,9 @@
+/*
+ * Clase: ReporteService
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Servicio de lÃ³gica de negocio.
+ */
+
 package service;
 
 import model.Reporte;

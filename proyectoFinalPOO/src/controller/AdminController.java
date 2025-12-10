@@ -1,3 +1,9 @@
+/*
+ * Clase: AdminController
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Controlador de funciones administrativas.
+ */
+
 package controller;
 
 import model.User;

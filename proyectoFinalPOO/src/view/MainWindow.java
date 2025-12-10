@@ -1,3 +1,9 @@
+/*
+ * Clase: MainWindow
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Ventana principal de la aplicaciÃ³n.
+ */
+
 package view;
 
 import controller.AuthController;

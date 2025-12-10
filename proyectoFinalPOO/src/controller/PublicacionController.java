@@ -1,3 +1,9 @@
+/*
+ * Clase: PublicacionController
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * DescripciÃ³n: Controlador que gestiona publicaciones y ofertas.
+ */
+
 package controller;
 
 import java.util.Date;

@@ -1,3 +1,10 @@
+/*
+ * Clase: AuthController
+ * Autores: Anggel Leal, Wilfer Herrera, David Santos
+ * Descripción: Controlador que maneja la autenticación de usuarios.
+ * Centraliza la lógica de login y registro, delegando al UserService.
+ */
+
 package controller;
 
 import model.User;
@@ -11,19 +18,15 @@ public class AuthController {
         this.userService = userService;
     }
 
-    // 1. MÉTODO REQUERIDO POR LoginWindow
+    // Maneja el inicio de sesión del usuario
     public User manejarLogin(String username, String password) {
-        // La lógica de inicio de sesión se centraliza aquí
         return userService.iniciarSesion(username, password);
     }
 
-    // 2. MÉTODO REQUERIDO POR LoginWindow
+    // Maneja el registro de un nuevo usuario en el sistema
     public boolean manejarRegistro(String id, String username, String password, String correo, String nombre,
             String apellido, String ubicacion) {
-        // La lógica de registro se centraliza aquí
-
-        // Asumiendo que UserService tiene un método registrarUsuario
         return userService.registrarUsuario(id, username, password, correo, nombre, apellido, ubicacion);
     }
 
-}
+}
