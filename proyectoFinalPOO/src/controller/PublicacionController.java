@@ -1,7 +1,8 @@
-/*
- * Clase: PublicacionController
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Controlador que gestiona publicaciones y ofertas.
+/**
+ * Clase:PublicacionController
+ * Controlador encargado de manejar todas las operaciones relacionadas con las publicaciones (subastas y trueques)
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.0
  */
 
 package controller;
@@ -26,26 +27,42 @@ public class PublicacionController {
     private final PublicacionService publicacionService;
     private final OfertaService ofertaService;
     private final ChatController chatController;
-
+    
+    /**
+     * Constructor principal del controlador.
+     * 
+     * @param publicacionService servicio para manejar publicaciones.
+     * @param ofertaService      servicio para manejar ofertas.
+     * @param chatController     controlador del sistema de chat.
+     */
     public PublicacionController(PublicacionService publicacionService, OfertaService ofertaService,
             ChatController chatController) {
         this.publicacionService = publicacionService;
         this.ofertaService = ofertaService;
         this.chatController = chatController;
     }
-
+    
+ /**
+ *@return lista de todas las publicaciones activas en el sistema.
+ */
     public List<Publicacion> obtenerPublicacionesActivas() {
         return publicacionService.buscarPublicacionesActivas();
     }
-
+    
+     /**
+     * Obtiene todas las publicaciones realizadas por un vendedor específico.
+     */
     public List<Publicacion> obtenerPublicacionesPorVendedor(String idVendedor) {
         return publicacionService.obtenerPublicacionesPorVendedor(idVendedor);
     }
-
+     /** Obtiene el usuario/vendedor dueño de una publicación. */
     public User obtenerVendedor(String idPublicacion) {
         return publicacionService.obtenerVendedorDePublicacion(idPublicacion);
     }
-
+    
+     /**
+     * Crea una nueva publicación tipo Subasta.
+     */
     public boolean crearSubasta(String titulo, String descripcion, User vendedor, double precioMinimo,
             int diasDuracion, List<String> fotosPaths, String categoria, util.CondicionArticulo condicion) {
         try {
@@ -64,7 +81,10 @@ public class PublicacionController {
             return false;
         }
     }
-
+    
+     /**
+     * Crea una nueva publicación tipo Trueque.
+     */
     public boolean crearTrueque(String titulo, String descripcion, User vendedor, String objetosDeseados,
             List<String> fotosPaths, String categoria, util.CondicionArticulo condicion) {
         try {
@@ -90,7 +110,10 @@ public class PublicacionController {
     }
 
     // --- Métodos para Ofertas ---
-
+    
+    /**
+     * Realiza una nueva oferta sobre una publicación, también envía un mensaje automático al chat entre ofertante y vendedor.
+     */
     public boolean ofertar(String idPublicacion, String idOfertante, double monto, String descripcionTrueque,
             List<String> imagenes) {
         try {
@@ -271,14 +294,17 @@ public class PublicacionController {
         }
     }
 
+     /** Genera un ID único para una publicación. */
     private String generarId() {
         return "PUB-" + System.currentTimeMillis();
     }
 
+     /** Genera un ID único para una oferta. */
     private String generarIdOferta() {
         return "OFE-" + System.currentTimeMillis();
     }
-
+    
+    /** Obtiene el valor actual de la puja más alta en una subasta. */
     public double obtenerPujaActualSubasta(PublicacionSubasta subasta) {
         if (subasta == null) {
             throw new IllegalArgumentException("La subasta no puede ser nula.");
@@ -378,7 +404,13 @@ public class PublicacionController {
                     "Error al concretar intercambio: " + e.getMessage());
         }
     }
-
+    
+    /**
+     * Finaliza una subasta luego de que el ganador realiza su pago.
+     * - Solo el que la creó puede finalizarla.
+     * -Se finaliza la publicación.
+     * - Permite calificar al vendedor.
+     */
     public void finalizarSubastaConPago(String idPublicacion, String idComprador) {
         try {
             Publicacion publicacion = publicacionService.buscarPublicacionPorId(idPublicacion);
