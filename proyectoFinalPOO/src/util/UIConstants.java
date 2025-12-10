@@ -1,3 +1,9 @@
+/**
+ * Clase: UIConstants
+ * Constantes de diseño para mantener consistencia visual
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.3
+ */
 package util;
 
 import java.awt.Color;
@@ -5,9 +11,6 @@ import java.awt.Font;
 import javax.swing.BorderFactory;
 import javax.swing.border.Border;
 
-/**
- * Constantes de diseño para mantener consistencia visual
- */
 public class UIConstants {
 
     // Colores principales
