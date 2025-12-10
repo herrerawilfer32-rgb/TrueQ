@@ -1,8 +1,10 @@
-/*
+/**
  * Clase: Oferta
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Modelo que representa una oferta.
+ *  Modelo que representa una oferta.
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.4
  */
+
 
 package model;
 
@@ -27,6 +29,17 @@ public class Oferta implements Serializable {
 
 	private util.EstadoOferta estadoOferta;
 
+	 /**
+     * Crea una nueva oferta asociada a una publicación.
+     *
+     * @param idOferta ID único asignado a la oferta.
+     * @param idPublicacion ID de la publicación sobre la que se realiza la oferta.
+     * @param idOfertante ID del usuario que realiza la oferta.
+     * @param fechaOferta Fecha en la que se creó la oferta.
+     * @param montoOferta Monto monetario ofrecido. Puede ser 0 si solo es trueque.
+     * @param descripcionTrueque Descripción de los objetos ofrecidos en trueque.
+     * @param estadoOferta Estado inicial de la oferta.
+     */
 	public Oferta(String idOferta, String idPublicacion, String idOfertante,
 			Date fechaOferta, double montoOferta,
 			String descripcionTrueque, EstadoOferta estadoOferta) {
