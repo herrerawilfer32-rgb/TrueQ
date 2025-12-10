@@ -1,8 +1,9 @@
-/*
- * Clase: Reporte
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Modelo de datos.
- */
+/**
+ * Clase: ConfiguracionGlobal
+ * Modelo de reportes
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.1
+ */
 
 package model;
 
@@ -28,6 +29,16 @@ public class Reporte implements java.io.Serializable {
     private String idAdminAsignado;
     private String resolucion;
 
+     /**
+     * Crea un nuevo reporte con la información básica.
+     *
+     * @param idReporte           Identificador único del reporte.
+     * @param idReportante        ID del usuario que reporta.
+     * @param tipo                Tipo de reporte generado.
+     * @param idObjetoReportado   ID del usuario o publicación reportada.
+     * @param motivo              Motivo del reporte.
+     * @param descripcion         Descripción detallada del incidente.
+     */
     public Reporte(String idReporte, String idReportante, TipoReporte tipo, String idObjetoReportado,
             String motivo, String descripcion) {
         this.idReporte = idReporte;
