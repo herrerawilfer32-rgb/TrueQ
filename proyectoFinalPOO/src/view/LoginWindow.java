@@ -1,9 +1,9 @@
-/*
+/**
  * Clase: LoginWindow
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Ventana de inicio de sesiÃ³n.
- */
-
+ * Ventana de inicio de sesión.
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.2
+ */
 package view;
 
 import controller.AuthController;
@@ -11,6 +11,9 @@ import model.User;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * Ventana de inicio de sesión de usuarios, esta permite ingresar nombre de usuario y contraseña, valida los datos y notifica a la ventana principal cuando el usuario inicia sesión correctamente.
+ */
 public class LoginWindow extends JFrame {
 
     private final AuthController authController;
@@ -20,6 +23,13 @@ public class LoginWindow extends JFrame {
     private JPasswordField campoContraseña;
 
     // Constructor modificado: recibe MainWindow
+    
+    /**
+     * Constructor de la ventana de login.
+     *
+     * @param authController controlador de autenticación
+     * @param mainWindow     ventana principal que será notificada al iniciar sesión
+     */
     public LoginWindow(AuthController authController, MainWindow mainWindow) {
         this.authController = authController;
         this.mainWindow = mainWindow;
