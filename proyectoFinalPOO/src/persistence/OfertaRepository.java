@@ -1,8 +1,9 @@
-/*
- * Clase: OfertaRepository
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Repositorio de persistencia.
- */
+/**
+ * Clase:  OfertaRepository
+ * Gestionaa la persistencia de ofertas realizadas por usuarios dentro del sistema.
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.1
+ */
 
 package persistence;
 
