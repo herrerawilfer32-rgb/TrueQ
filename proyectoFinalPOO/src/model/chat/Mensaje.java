@@ -1,8 +1,9 @@
-/*
- * Clase: Mensaje
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Modelo de datos.
- */
+/**
+ * Clase: ConfiguracionGlobal
+ * Modelo de mensajes
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.3
+ */
 
 package model.chat;
 
