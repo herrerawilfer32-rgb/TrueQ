@@ -1,9 +1,9 @@
-/*
+/**
  * Clase: MisOfertasView
- * Autores: Anggel Leal, Wilfer Herrera, David Santos
- * DescripciÃ³n: Vista de la interfaz.
- */
-
+ * Vista de la interfaz.
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1.2
+ */
 package view;
 
 import controller.PublicacionController;
@@ -18,6 +18,15 @@ import java.util.List;
 
 import util.EstadoPublicacion;
 
+/**
+ * Vista que permite al usuario dueño de publicaciones ver y gestionartodas las ofertas recibidas. Forma parte del módulo de trueque y subastas.
+ * Permite
+ * - Listar publicaciones del usuario.
+ * - Mostrar ofertas recibidas para cada publicación.
+ * - Aceptar/rechazar ofertas de trueque.
+ * - Cerrar subastas manualmente si están activas.
+ * - Eliminar ofertas.
+ */
 public class MisOfertasView extends JFrame {
 
     private final PublicacionController controller;
@@ -26,6 +35,12 @@ public class MisOfertasView extends JFrame {
     private DefaultListModel<Publicacion> listModelPublicaciones;
     private JPanel panelOfertas;
 
+    /**
+     * Constructor principal de la vista.
+     *
+     * @param controller controlador que gestiona publicación y ofertas
+     * @param usuarioActual usuario actualmente autenticado en el sistema
+     */
     public MisOfertasView(PublicacionController controller, User usuarioActual) {
         setBackground(new Color(106, 153, 149));
         this.controller = controller;
@@ -51,6 +66,10 @@ public class MisOfertasView extends JFrame {
         cargarMisPublicaciones();
     }
 
+    /**
+     * Inicializa los componentes gráficos de la interfaz.
+     * Configura paneles, lista de publicaciones y panel de ofertas.
+     */
     private void initComponents() {
         // Panel Izquierdo: Mis Publicaciones
         listModelPublicaciones = new DefaultListModel<>();
