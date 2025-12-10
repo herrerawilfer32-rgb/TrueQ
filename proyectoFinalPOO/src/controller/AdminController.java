@@ -1,8 +1,8 @@
 /**
  * Clase: AdminController
  * Controlador encargado de gestionar las acciones administrativas del sistema.Permite a un usuario administrador realizar operaciones como listar, buscar,actualizar y eliminar usuarios, publicaciones y ofertas, tambien cambiar roles y obtener estadísticas generales.
- * @Author Anggel Leal, Wilfer Herrera, David Santos
- * @Version 1
+ * @author Anggel Leal, Wilfer Herrera, David Santos
+ * @version 1
  */
 
 package controller;
